@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"time"
 
-	"github.com/d3sw/floop/lifecycle"
+	"github.com/d3sw/floop"
 	"github.com/d3sw/floop/template"
 )
 
@@ -70,26 +73,40 @@ func NewHTTPClientHandler(conf *EndpointConfig) *HTTPClientHandler {
 	}
 }
 
-func (handler *HTTPClientHandler) Handle(event *lifecycle.Event) error {
+func (handler *HTTPClientHandler) Handle(event *floop.Event) (map[string]interface{}, error) {
 	resp, err := handler.httpDo(event, handler.conf)
 	if err != nil {
 		//log.Printf("[ERROR] %v", err)
-		return err
+		return nil, err
 	}
 
 	if resp.StatusCode > 399 {
-		//	log.Printf("[ERROR] %s", resp.Status)
-		return errors.New(resp.Status)
+		return nil, errors.New(resp.Status)
 	}
 
-	return nil
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		if err == io.EOF {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	var r map[string]interface{}
+	if err = json.Unmarshal(b, &r); err != nil {
+		return nil, err
+	}
+
+	return r, nil
 }
 
-func (handler *HTTPClientHandler) httpDo(event *lifecycle.Event, conf *EndpointConfig) (*http.Response, error) {
-	//log.Println("Calling", conf)
+func (handler *HTTPClientHandler) httpDo(event *floop.Event, conf *EndpointConfig) (*http.Response, error) {
+	uri := template.Parse(event, conf.URI)
 	body := template.Parse(event, conf.Body)
 	buff := bytes.NewBuffer([]byte(body))
-	req, err := http.NewRequest(conf.Method, conf.URI, buff)
+	req, err := http.NewRequest(conf.Method, uri, buff)
 	if err == nil {
 		return handler.client.Do(req)
 	}

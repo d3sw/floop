@@ -2,7 +2,6 @@ package floop
 
 import (
 	"github.com/d3sw/floop/child"
-	"github.com/d3sw/floop/lifecycle"
 )
 
 // LifecycledChild wraps lifecycle events around a child process. It hooks in to allow process
@@ -11,12 +10,12 @@ type LifecycledChild struct {
 	input *child.NewInput
 	proc  *child.Child
 
-	lc *lifecycle.Lifecycle
+	lc *Lifecycle
 }
 
 // NewLifecycledChild instantiates a new LifecycledChild with an input and lifecycle to use for the
 // instannce
-func NewLifecycledChild(input *child.NewInput, lifecycle *lifecycle.Lifecycle) (*LifecycledChild, error) {
+func NewLifecycledChild(input *child.NewInput, lifecycle *Lifecycle) (*LifecycledChild, error) {
 
 	chld, err := child.New(input)
 	if err == nil {
@@ -31,8 +30,8 @@ func NewLifecycledChild(input *child.NewInput, lifecycle *lifecycle.Lifecycle) (
 }
 
 // Start calls the begin phase of the lifecycle and starts the child process
-func (li *LifecycledChild) Start(meta map[string]string) error {
-	ctx := &lifecycle.Context{
+func (li *LifecycledChild) Start(meta map[string]interface{}) error {
+	ctx := &Context{
 		Command: li.input.Command,
 		Args:    li.input.Args,
 		Meta:    meta,

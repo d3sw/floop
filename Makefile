@@ -10,7 +10,7 @@ clean:
 	rm -rf ./dist
 
 build:
-	go build -o $(NAME) ./cmd/*.go
+	go build -o $(NAME) $(FILES)
 
 dist:
 	[ -d ./dist ] || mkdir ./dist

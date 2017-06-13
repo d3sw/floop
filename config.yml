@@ -4,21 +4,18 @@ handlers:
     begin:
         - type: http
           config:
-            uri: "http://conductor.service.owf-dev"
-            method: "POST"
-            body: |
-                '{
-                    "workflowInstanceId": "${meta.workflowInstanceId}",
-                    "taskId": "${meta.taskId}",
-                    "callbackAfterSeconds": 0,
-                    "status": "IN_PROGRESS",
-                    "outputData": {}
-                }'
+            uri: "http://conductor.service.owf-dev:xxx/api/tasks/poll/${meta.taskType}"
+            method: "GET"
+          # Additional context to add from the response of the call to be made available to other
+          # phases in the lifecycle.
+          context: [ "taskId" ]
+    #progress:
     completed:
         - type: http
           config:
             uri: "http://conductor.service.owf-dev"
             method: "POST"
+            # See Event struct in lifecycle/handler.go for available fields in the body section
             body: |
                 '{
                     "workflowInstanceId": "${meta.workflowInstanceId}",

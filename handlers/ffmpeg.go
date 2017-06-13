@@ -4,7 +4,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/d3sw/floop/lifecycle"
+	"github.com/d3sw/floop"
 )
 
 // FFMPEGHandler implements a Handler for ffmpeg.  The begin and end events do nothing, only progress
@@ -12,7 +12,7 @@ import (
 type FFMPEGHandler struct{}
 
 // Handle handles progress callbacks for ffmpeg
-func (handler *FFMPEGHandler) Handle(event *lifecycle.Event) error {
+func (handler *FFMPEGHandler) Handle(event *floop.Event) (map[string]interface{}, error) {
 	b := event.Data.([]byte)
 	kv := parsePerLineKeyValue(string(b), "=")
 
@@ -20,7 +20,7 @@ func (handler *FFMPEGHandler) Handle(event *lifecycle.Event) error {
 		log.Printf("ffmpeg progress: %+v", kv)
 	}
 
-	return nil
+	return nil, nil
 }
 
 func parsePerLineKeyValue(keyValuePairs, delim string) map[string]string {

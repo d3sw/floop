@@ -3,34 +3,27 @@ package floop
 import (
 	"io/ioutil"
 
-	"github.com/d3sw/floop/lifecycle"
-
 	yaml "gopkg.in/yaml.v2"
 )
 
 // Config is the overall config.
 type Config struct {
 	Quiet    bool
-	Handlers map[lifecycle.EventType][]HandlerConfig
+	Handlers map[EventType][]*HandlerConfig
 }
 
+// HandlerConfig holds the config for a given handler
 type HandlerConfig struct {
-	Type      string
-	Transform string
-	Config    map[string]interface{}
+	Type    string                 // type of handler
+	Context []string               // list of keys to set the context from callbacks
+	Config  map[string]interface{} // Handler specific configs
 }
-
-// HandlersConfig holds the config for all handlers
-// type HandlersConfig struct {
-// 	HTTP   *handlers.HTTPConfig
-// 	FFMPEG interface{}
-// }
 
 // DefaultConfig returns a Config with defaults using the echo Lifecycle
 func DefaultConfig() *Config {
 	return &Config{
 		Quiet:    false,
-		Handlers: make(map[lifecycle.EventType][]HandlerConfig),
+		Handlers: make(map[EventType][]*HandlerConfig),
 	}
 }
 

@@ -9,7 +9,6 @@ import (
 	"github.com/d3sw/floop"
 	"github.com/d3sw/floop/child"
 	"github.com/d3sw/floop/handlers"
-	"github.com/d3sw/floop/lifecycle"
 )
 
 //var (
@@ -40,28 +39,30 @@ func commandLessInput(sout, serr io.Writer, noDisplay bool) *child.NewInput {
 	}
 }
 
-func newInput(args []string, lc *lifecycle.Lifecycle, noDisplay bool) *child.NewInput {
+func newInput(cmd string, args []string, lc *floop.Lifecycle, noDisplay bool) *child.NewInput {
 	stdout := floop.NewBufferedWriter(lc.Progress)
 	stderr := floop.NewBufferedWriter(lc.Progress)
 	input := commandLessInput(stdout, stderr, noDisplay)
 
-	input.Command = args[0]
-	input.Args = args[1:]
+	input.Command = cmd
+	input.Args = args
 	return input
 }
 
-func loadHandlers(lifeCycle *lifecycle.Lifecycle, conf *floop.Config) error {
+func loadHandlers(lifeCycle *floop.Lifecycle, conf *floop.Config) error {
 	for eventType, configs := range conf.Handlers {
 		for _, config := range configs {
 
-			var handler lifecycle.Handler
+			var handler floop.Handler
 
 			switch config.Type {
 			case "http":
 				cfg := &handlers.EndpointConfig{
 					URI:    config.Config["uri"].(string),
 					Method: config.Config["method"].(string),
-					Body:   config.Config["body"].(string),
+				}
+				if _, ok := config.Config["body"]; ok {
+					cfg.Body = config.Config["body"].(string)
 				}
 				handler = handlers.NewHTTPClientHandler(cfg)
 
@@ -73,7 +74,7 @@ func loadHandlers(lifeCycle *lifecycle.Lifecycle, conf *floop.Config) error {
 				return fmt.Errorf("handler not supported: %s", config.Type)
 			}
 
-			lifeCycle.Register(eventType, handler)
+			lifeCycle.Register(eventType, handler, config)
 		}
 	}
 	return nil
@@ -83,28 +84,32 @@ func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	//flag.Parse()
 
+	args := os.Args[1:]
+
+	ctx, err := parseCLI(args)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	conf, err := floop.LoadConfig("./config.yml")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	//log.Printf("Conf %v", conf.Handlers.HTTP.EndpointConfig)
-
-	lifeCycle := lifecycle.New()
+	lifeCycle := floop.NewLifecycle()
 	err = loadHandlers(lifeCycle, conf)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	args := os.Args[1:]
-	input := newInput(args, lifeCycle, conf.Quiet)
+	input := newInput(ctx.Command, ctx.Args, lifeCycle, conf.Quiet)
 
 	lci, err := floop.NewLifecycledChild(input, lifeCycle)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if err = lci.Start(nil); err != nil {
+	if err = lci.Start(ctx.Meta); err != nil {
 		log.Fatal(err)
 	}
 
