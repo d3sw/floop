@@ -1,0 +1,43 @@
+# If true don't write to stdout or stderr
+quiet: false
+handlers:
+    begin:
+        - type: http
+          config:
+            uri: "http://conductor.service.owf-dev"
+            method: "POST"
+            body: |
+                '{
+                    "workflowInstanceId": "${meta.workflowInstanceId}",
+                    "taskId": "${meta.taskId}",
+                    "callbackAfterSeconds": 0,
+                    "status": "IN_PROGRESS",
+                    "outputData": {}
+                }'
+    completed:
+        - type: http
+          config:
+            uri: "http://conductor.service.owf-dev"
+            method: "POST"
+            body: |
+                '{
+                    "workflowInstanceId": "${meta.workflowInstanceId}",
+                    "taskId": "${meta.taskId}",
+                    "callbackAfterSeconds": 0,
+                    "status": "COMPLETED",
+                    "outputData": {}
+                }'
+    failed:
+        - type: http
+          config:
+            uri: "http://conductor.service.owf-dev"
+            method: "POST"
+            body: |
+                '{
+                    "workflowInstanceId": "${meta.workflowInstanceId}",
+                    "taskId": "${meta.taskId}",
+                    "reasonForIncompletion": "Exited with code: ${data}",
+                    "callbackAfterSeconds": 0,
+                    "status": "FAILED",
+                    "outputData": {"exitCode": ${data}}
+                }'

@@ -1,0 +1,7 @@
+# floop
+
+
+
+### TODO
+
+- [ ] Service discovery
