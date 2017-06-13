@@ -9,7 +9,7 @@ clean:
 	rm -f $(NAME)
 	rm -rf ./dist
 
-build:
+$(NAME):
 	go build -o $(NAME) $(FILES)
 
 dist:

@@ -86,12 +86,12 @@ func main() {
 
 	args := os.Args[1:]
 
-	ctx, err := parseCLI(args)
+	cfgfile, ctx, err := parseCLI(args)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	conf, err := floop.LoadConfig("./config.yml")
+	conf, err := floop.LoadConfig(cfgfile)
 	if err != nil {
 		log.Fatal(err)
 	}

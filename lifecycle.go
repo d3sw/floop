@@ -38,20 +38,6 @@ func (lc *Lifecycle) Register(eventType EventType, l Handler, conf *HandlerConfi
 	lc.handlers[eventType] = append(arr, &phaseHandler{Handler: l, conf: conf})
 }
 
-func (lc *Lifecycle) applyContext(meta map[string]interface{}, conf *HandlerConfig) {
-	if conf.Context == nil || len(conf.Context) == 0 {
-		return
-	}
-
-	if meta != nil {
-		for _, v := range conf.Context {
-			if val, ok := meta[v]; ok {
-				lc.ctx.Meta[v] = val
-			}
-		}
-	}
-}
-
 // Begin echos back input data before process starts
 func (lc *Lifecycle) Begin(ctx *Context) {
 	lc.ctx = ctx
@@ -119,6 +105,20 @@ func (lc *Lifecycle) Completed() {
 	for _, v := range handlers {
 		if _, err := v.Handle(event); err != nil {
 			log.Println("[ERROR]", event.Type, err)
+		}
+	}
+}
+
+func (lc *Lifecycle) applyContext(meta map[string]interface{}, conf *HandlerConfig) {
+	if conf.Context == nil || len(conf.Context) == 0 {
+		return
+	}
+
+	if meta != nil {
+		for _, v := range conf.Context {
+			if val, ok := meta[v]; ok {
+				lc.ctx.Meta[v] = val
+			}
 		}
 	}
 }

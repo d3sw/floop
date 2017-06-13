@@ -4,7 +4,7 @@ handlers:
     begin:
         - type: http
           config:
-            uri: "http://conductor.service.owf-dev:xxx/api/tasks/poll/${meta.taskType}"
+            uri: "http://conductor.service.owf-dev:8080/api/tasks/poll/${meta.taskType}"
             method: "GET"
           # Additional context to add from the response of the call to be made available to other
           # phases in the lifecycle.
