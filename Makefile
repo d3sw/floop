@@ -1,6 +1,6 @@
 
 NAME = floop
-FILES = cmd/main.go
+FILES = cmd/main.go cmd/cli.go
 
 BUILD_CMD = go build
 

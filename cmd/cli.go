@@ -7,6 +7,7 @@ import (
 	"github.com/d3sw/floop"
 )
 
+// -exec must be the last argument
 func parseCLI(args []string) (*floop.Context, error) {
 	ctx := &floop.Context{
 		Meta: make(map[string]interface{}),
