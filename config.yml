@@ -35,11 +35,13 @@ handlers:
       method: "POST"
       headers:
         Content-Type: "application/json"
+        Accept: "application/json"
       # See types.Event struct for available fields
       body: |
         '{
             "workflowInstanceId": "${meta.workflowInstanceId}",
             "taskId": "${meta.taskId}",
+            "reasonForIncompletion": "",
             "callbackAfterSeconds": 0,
             "status": "COMPLETED",
             "outputData": {}
