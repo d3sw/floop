@@ -115,7 +115,7 @@ func (lc *Lifecycle) Begin(ctx *types.Context) error {
 		meta, err := v.Handle(event)
 		if err != nil {
 			if v.conf.IgnoreErrors {
-				log.Printf("[ERROR] phase=%s %v", event.Type, err)
+				log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 				continue
 			}
 			return err
@@ -143,7 +143,7 @@ func (lc *Lifecycle) Progress(line []byte) {
 		}
 
 		if _, err := v.Handle(event); err != nil {
-			log.Printf("[ERROR] phase=%s %v", event.Type, err)
+			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 		}
 	}
 }
@@ -159,7 +159,7 @@ func (lc *Lifecycle) Failed(exitCode int) {
 	event := &types.Event{Type: types.EventTypeFailed, Meta: lc.ctx.Meta, Data: exitCode}
 	for _, v := range handlers {
 		if _, err := v.Handle(event); err != nil {
-			log.Printf("[ERROR] phase=%s %v", event.Type, err)
+			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 		}
 	}
 }
@@ -174,7 +174,7 @@ func (lc *Lifecycle) Completed() {
 	event := &types.Event{Type: types.EventTypeCompleted, Meta: lc.ctx.Meta}
 	for _, v := range handlers {
 		if _, err := v.Handle(event); err != nil {
-			log.Printf("[ERROR] phase=%s %v", event.Type, err)
+			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 		}
 	}
 }

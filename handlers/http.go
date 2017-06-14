@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"time"
 
@@ -108,6 +109,7 @@ func (handler *HTTPClientHandler) httpDo(event *types.Event, conf *EndpointConfi
 	buff := bytes.NewBuffer([]byte(body))
 	req, err := http.NewRequest(conf.Method, uri, buff)
 	if err == nil {
+		log.Printf("[DEBUG] handler=http uri=%s", uri)
 		return handler.client.Do(req)
 	}
 
