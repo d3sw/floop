@@ -4,6 +4,15 @@ meta:
 - taskType # NoMadeUpdateTask1
 - workflowInstanceId # 8fecc7dd-9736-43f1-983b-30f8e1cb6de3
 
+# command: docker
+# args: [
+#   "run", "--rm",
+#   "opencoconut/ffmpeg", "-progress", "/dev/stdout",
+#   "-i", "http://files.coconut.co.s3.amazonaws.com/test.mp4",
+#   "-f", "webm", "-c:v", "libvpx", "-c:a", "libvorbis",
+#   "test.webm" ]
+
+
 # If true don't write to stdout or stderr
 quiet: true
 
@@ -35,17 +44,16 @@ handlers:
       method: "POST"
       headers:
         Content-Type: "application/json"
-        Accept: "application/json"
       # See types.Event struct for available fields
       body: |
-        '{
+        {
             "workflowInstanceId": "${meta.workflowInstanceId}",
             "taskId": "${meta.taskId}",
             "reasonForIncompletion": "",
             "callbackAfterSeconds": 0,
             "status": "COMPLETED",
             "outputData": {}
-        }'
+        }
   # Called when the process exits with a non-zero status
   failed:
   - type: http
@@ -55,11 +63,11 @@ handlers:
       headers:
         Content-Type: "application/json"
       body: |
-        '{
+        {
             "workflowInstanceId": "${meta.workflowInstanceId}",
             "taskId": "${meta.taskId}",
             "reasonForIncompletion": "Exited with code: ${data}",
             "callbackAfterSeconds": 0,
             "status": "FAILED",
             "outputData": {"exitCode": ${data}}
-        }'
+        }

@@ -43,8 +43,6 @@ func newInput(cmd string, args []string, lc *floop.Lifecycle, noDisplay bool) *c
 }
 
 func main() {
-	//log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
-	//flag.Parse()
 
 	args := os.Args[1:]
 	cli, err := NewCLI(version, args)

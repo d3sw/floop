@@ -19,62 +19,55 @@ var (
 	errInvalidMethod = "invalid method: %d"
 )
 
-// EndpointConfig is the config for a single endpoint
-type EndpointConfig struct {
+type endpointConfig struct {
 	URI     string
 	Method  string
 	Body    string
 	Headers map[string]string
 }
 
-// // HTTPConfig contains the http handler config
-// type HTTPConfig struct {
-// 	*EndpointConfig
-// 	Begin     *EndpointConfig
-// 	Progress  *EndpointConfig
-// 	Failed    *EndpointConfig
-// 	Completed *EndpointConfig
-// }
-//
-// func (conf *HTTPConfig) setDefault(dst *EndpointConfig) {
-// 	src := conf.EndpointConfig
-//
-// 	if src == nil || dst == nil {
-// 		return
-// 	}
-//
-// 	if dst.Method == "" {
-// 		dst.Method = src.Method
-// 	}
-// 	if dst.URI == "" {
-// 		dst.URI = src.URI
-// 	}
-// 	if dst.Body == "" {
-// 		dst.Body = src.Body
-// 	}
-// }
-
-// SetDefaults sets the defaults for values for config options not provided.
-// func (conf *HTTPConfig) SetDefaults() {
-// 	conf.setDefault(conf.Begin)
-// 	conf.setDefault(conf.Progress)
-// 	conf.setDefault(conf.Failed)
-// 	conf.setDefault(conf.Completed)
-// }
-
+// HTTPClientHandler implements a HTTP client handler for events
 type HTTPClientHandler struct {
-	conf   *EndpointConfig
+	conf   *endpointConfig
 	client *http.Client
 }
 
 // NewHTTPClientHandler instantiates a new HTTPClientHandler
-func NewHTTPClientHandler(conf *EndpointConfig) *HTTPClientHandler {
+func NewHTTPClientHandler() *HTTPClientHandler {
 	return &HTTPClientHandler{
 		client: &http.Client{Timeout: 3 * time.Second},
-		conf:   conf,
 	}
 }
 
+// Init initializes the http handler with the config
+func (handler *HTTPClientHandler) Init(conf *types.HandlerConfig) error {
+	config := conf.Config
+
+	handler.conf = &endpointConfig{
+		URI:     config["uri"].(string),
+		Method:  config["method"].(string),
+		Headers: make(map[string]string),
+	}
+
+	if _, ok := config["body"]; ok {
+		handler.conf.Body = config["body"].(string)
+	}
+
+	if hdrs, ok := config["headers"]; ok {
+		hm, ok := hdrs.(map[interface{}]interface{})
+		if !ok {
+			return fmt.Errorf("invalid header data type %#v", config["headers"])
+		}
+		for k, v := range hm {
+			key := k.(string)
+			value := v.(string)
+			handler.conf.Headers[key] = value
+		}
+	}
+	return nil
+}
+
+// Handle handles an event by making an http call per the config.
 func (handler *HTTPClientHandler) Handle(event *types.Event) (map[string]interface{}, error) {
 	resp, err := handler.httpDo(event, handler.conf)
 	if err != nil {
@@ -103,7 +96,7 @@ func (handler *HTTPClientHandler) Handle(event *types.Event) (map[string]interfa
 	return r, nil
 }
 
-func (handler *HTTPClientHandler) httpDo(event *types.Event, conf *EndpointConfig) (*http.Response, error) {
+func (handler *HTTPClientHandler) httpDo(event *types.Event, conf *endpointConfig) (*http.Response, error) {
 
 	uri := template.Parse(event, conf.URI)
 	body := template.Parse(event, conf.Body)
@@ -122,60 +115,3 @@ func (handler *HTTPClientHandler) httpDo(event *types.Event, conf *EndpointConfi
 
 	return nil, err
 }
-
-//
-// // Progress makes a HTTP call with the event.  This is not intended to be used in the case of
-// // realtime updates as it may be expensive.
-// func (handler *HTTPClientHandler) Progress(event *lifecycle.Event) {
-// 	conf := handler.conf.Progress
-// 	if conf == nil {
-// 		return
-// 	}
-//
-// 	resp, err := handler.httpDo(event, conf)
-// 	if err != nil {
-// 		log.Printf("[ERROR] %v", err)
-// 		return
-// 	}
-//
-// 	if resp.StatusCode > 399 {
-// 		log.Printf("[ERROR] %s", resp.Status)
-// 		return
-// 	}
-// }
-//
-// func (handler *HTTPClientHandler) Completed(event *lifecycle.Event) {
-// 	conf := handler.conf.Completed
-// 	if conf == nil {
-// 		return
-// 	}
-//
-// 	resp, err := handler.httpDo(event, conf)
-// 	if err != nil {
-// 		log.Printf("[ERROR] %v", err)
-// 		return
-// 	}
-//
-// 	if resp.StatusCode > 399 {
-// 		log.Printf("[ERROR] %s", resp.Status)
-// 		return
-// 	}
-// }
-//
-// func (handler *HTTPClientHandler) Failed(event *lifecycle.Event) {
-// 	conf := handler.conf.Failed
-// 	if conf == nil {
-// 		return
-// 	}
-//
-// 	resp, err := handler.httpDo(event, conf)
-// 	if err != nil {
-// 		log.Printf("[ERROR] %v", err)
-// 		return
-// 	}
-//
-// 	if resp.StatusCode > 399 {
-// 		log.Printf("[ERROR] %s", resp.Status)
-// 		return
-// 	}
-// }

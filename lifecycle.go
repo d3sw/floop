@@ -8,42 +8,6 @@ import (
 	"github.com/d3sw/floop/types"
 )
 
-// Handler implements and event handler interface.
-type Handler interface {
-	Handle(event *types.Event) (map[string]interface{}, error)
-}
-
-type phaseHandler struct {
-	conf *HandlerConfig
-	Handler
-}
-
-func (handler *phaseHandler) applyTransform(input string, out *types.Event) bool {
-	if len(handler.conf.Transform) == 0 {
-		return false
-	}
-
-	var transformed bool
-
-	tf := handler.conf.Transform
-	switch tf[0] {
-	case "kv":
-		kvs := transformKeyValuePairs(input, tf[1], tf[2])
-		if len(kvs) > 0 {
-			out.Data = kvs
-			transformed = true
-		}
-	case "line":
-		lines := transformLines(input, tf[1])
-		if len(lines) > 0 {
-			out.Data = lines
-			transformed = true
-		}
-	}
-
-	return transformed
-}
-
 // Lifecycle implements a Lifecycle that calls multiple lifecycles for an event.
 type Lifecycle struct {
 	ctx      *types.Context
@@ -62,41 +26,23 @@ func NewLifecycle(conf *Config) (*Lifecycle, error) {
 
 func (lc *Lifecycle) loadHandlers(conf *Config) error {
 	for eventType, configs := range conf.Handlers {
+		// Setup handlers for an event type
 		for _, config := range configs {
 
 			var handler Handler
 
 			switch config.Type {
 			case "http":
-				cfg := &handlers.EndpointConfig{
-					URI:     config.Config["uri"].(string),
-					Method:  config.Config["method"].(string),
-					Headers: make(map[string]string),
-				}
-				if _, ok := config.Config["body"]; ok {
-					cfg.Body = config.Config["body"].(string)
-				}
-
-				if hdrs, ok := config.Config["headers"]; ok {
-					hm, ok := hdrs.(map[interface{}]interface{})
-					if !ok {
-						return fmt.Errorf("invalid header data type %#v", config.Config["headers"])
-					}
-					for k, v := range hm {
-						key := k.(string)
-						value := v.(string)
-						cfg.Headers[key] = value
-					}
-				}
-
-				handler = handlers.NewHTTPClientHandler(cfg)
+				handler = handlers.NewHTTPClientHandler()
 			case "echo":
 				handler = &handlers.EchoHandler{}
 			default:
 				return fmt.Errorf("handler not supported: %s", config.Type)
 			}
 
-			lc.register(eventType, handler, config)
+			if err := lc.register(eventType, handler, config); err != nil {
+				return err
+			}
 			log.Printf("[INFO] Registered handler: phase=%s handler=%s", eventType, config.Type)
 		}
 	}
@@ -104,14 +50,19 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 }
 
 // Register registers a new Handler by an arbitrary name.
-func (lc *Lifecycle) register(eventType types.EventType, l Handler, conf *HandlerConfig) {
+func (lc *Lifecycle) register(eventType types.EventType, l Handler, conf *types.HandlerConfig) error {
+	if err := l.Init(conf); err != nil {
+		return err
+	}
+
 	arr, ok := lc.handlers[eventType]
 	if !ok {
 		lc.handlers[eventType] = []*phaseHandler{&phaseHandler{Handler: l, conf: conf}}
-		return
+	} else {
+		lc.handlers[eventType] = append(arr, &phaseHandler{Handler: l, conf: conf})
 	}
 
-	lc.handlers[eventType] = append(arr, &phaseHandler{Handler: l, conf: conf})
+	return nil
 }
 
 // Begin is called right before a process is launched.  The context is internally stored and may be
@@ -193,7 +144,7 @@ func (lc *Lifecycle) Completed() {
 	}
 }
 
-func (lc *Lifecycle) applyContext(meta map[string]interface{}, conf *HandlerConfig) {
+func (lc *Lifecycle) applyContext(meta map[string]interface{}, conf *types.HandlerConfig) {
 	if conf.Context == nil || len(conf.Context) == 0 {
 		return
 	}

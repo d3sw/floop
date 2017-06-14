@@ -9,6 +9,10 @@ import (
 // EchoHandler implements a Handler that simply echoes back the input
 type EchoHandler struct{}
 
+func (lc *EchoHandler) Init(*types.HandlerConfig) error {
+	return nil
+}
+
 // Handle echos back input data before process starts
 func (lc *EchoHandler) Handle(event *types.Event) (map[string]interface{}, error) {
 	fmt.Printf("[Echo] phase=%s %s\n", event.Type, event.Data)

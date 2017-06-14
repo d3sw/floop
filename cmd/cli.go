@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -16,6 +17,7 @@ type CLI struct {
 
 	isHelp    bool
 	isVersion bool
+	debug     bool
 
 	Exec []string               // child process command and args
 	Meta map[string]interface{} // context data from command line
@@ -61,9 +63,10 @@ func NewCLI(version string, args []string) (cli *CLI, err error) {
 			return
 
 		case "-c":
-			// Config file
 			i++
 			cli.ConfigFile = args[i]
+		case "-debug":
+			cli.debug = true
 		case "-h", "-help", "--help", "--h":
 			cli.isHelp = true
 		case "-version", "--version":
@@ -100,6 +103,8 @@ func (cli *CLI) Run() (int, error) {
 	} else if cli.isVersion {
 		fmt.Println(cli.Version)
 		return 0, nil
+	} else if cli.debug {
+		log.SetFlags(log.LstdFlags | log.Lshortfile | log.Lmicroseconds)
 	}
 
 	return cli.run()
@@ -121,7 +126,14 @@ func (cli *CLI) run() (int, error) {
 		return exitCode, err
 	}
 
-	input := newInput(cli.Command(), cli.Args(), lifeCycle, conf.Quiet)
+	// Override cli command and args
+	cmd := cli.Command()
+	if cmd != "" {
+		conf.Command = cmd
+		conf.Args = cli.Args()
+	}
+
+	input := newInput(conf.Command, conf.Args, lifeCycle, conf.Quiet)
 	lci, err := floop.NewLifecycledChild(input, lifeCycle)
 	if err != nil {
 		return exitCode, err
