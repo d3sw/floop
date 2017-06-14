@@ -2,8 +2,10 @@
 # defined before starting the child process.
 meta:
 - taskType # NoMadeUpdateTask1
+- taskRefName # NoMadeUpdateTask1
 - workflowInstanceId # 8fecc7dd-9736-43f1-983b-30f8e1cb6de3
 
+# Command and args for child process 
 # command: docker
 # args: [
 #   "run", "--rm",
@@ -23,9 +25,13 @@ handlers:
   - type: http
     # Continue launching child process even if handler call returns an error.  Comment this
     # out to exit w/o launching the child process on handler failure
-    #ignorerrors: true
+    ignorerrors: true
     config:
-      uri: "http://conductor-server.service.owf-dev:30000/api/tasks/poll/${meta.taskType}"
+      uri: "http://conductor-server.service.owf-dev:30000/api/tasks/poll/batch/${meta.taskType}"
+      method: "GET"
+  - type: http
+    config:
+      uri: "http://conductor-server.service.owf-dev:30000/api/tasks/in_progress/${meta.workflowInstanceId}/${meta.taskRefName}"
       method: "GET"
     # Additional context to add from the response of the above call which is made available
     # during phases of the lifecycle after this one.
@@ -49,10 +55,8 @@ handlers:
         {
             "workflowInstanceId": "${meta.workflowInstanceId}",
             "taskId": "${meta.taskId}",
-            "reasonForIncompletion": "",
             "callbackAfterSeconds": 0,
-            "status": "COMPLETED",
-            "outputData": {}
+            "status": "COMPLETED"
         }
   # Called when the process exits with a non-zero status
   failed:
