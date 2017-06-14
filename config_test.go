@@ -9,5 +9,4 @@ func Test_Config(t *testing.T) {
 	}
 
 	t.Log(conf)
-
 }

@@ -69,12 +69,26 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 			switch config.Type {
 			case "http":
 				cfg := &handlers.EndpointConfig{
-					URI:    config.Config["uri"].(string),
-					Method: config.Config["method"].(string),
+					URI:     config.Config["uri"].(string),
+					Method:  config.Config["method"].(string),
+					Headers: make(map[string]string),
 				}
 				if _, ok := config.Config["body"]; ok {
 					cfg.Body = config.Config["body"].(string)
 				}
+
+				if hdrs, ok := config.Config["headers"]; ok {
+					hm, ok := hdrs.(map[interface{}]interface{})
+					if !ok {
+						return fmt.Errorf("invalid header data type %#v", config.Config["headers"])
+					}
+					for k, v := range hm {
+						key := k.(string)
+						value := v.(string)
+						cfg.Headers[key] = value
+					}
+				}
+
 				handler = handlers.NewHTTPClientHandler(cfg)
 			case "echo":
 				handler = &handlers.EchoHandler{}

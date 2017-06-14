@@ -1,7 +1,7 @@
 # Required metadata keys that need to supplied at runtime.  If specified floop will check these are
 # defined before starting the child process.
 meta:
-- taskType # NoMadWorkflowTest1
+- taskType # NoMadeUpdateTask1
 - workflowInstanceId # 8fecc7dd-9736-43f1-983b-30f8e1cb6de3
 
 # If true don't write to stdout or stderr
@@ -14,7 +14,7 @@ handlers:
   - type: http
     # Continue launching child process even if handler call returns an error.  Comment this
     # out to exit w/o launching the child process on handler failure
-    ignorerrors: true
+    #ignorerrors: true
     config:
       uri: "http://conductor-server.service.owf-dev:30000/api/tasks/poll/${meta.taskType}"
       method: "GET"
@@ -33,6 +33,8 @@ handlers:
     config:
       uri: "http://conductor-server.service.owf-dev:30000/api/tasks"
       method: "POST"
+      headers:
+        Content-Type: "application/json"
       # See types.Event struct for available fields
       body: |
         '{
@@ -48,6 +50,8 @@ handlers:
     config:
       uri: "http://conductor-server.service.owf-dev:30000/api/tasks"
       method: "POST"
+      headers:
+        Content-Type: "application/json"
       body: |
         '{
             "workflowInstanceId": "${meta.workflowInstanceId}",

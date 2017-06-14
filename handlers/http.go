@@ -21,9 +21,10 @@ var (
 
 // EndpointConfig is the config for a single endpoint
 type EndpointConfig struct {
-	URI    string
-	Method string
-	Body   string
+	URI     string
+	Method  string
+	Body    string
+	Headers map[string]string
 }
 
 // // HTTPConfig contains the http handler config
@@ -109,7 +110,13 @@ func (handler *HTTPClientHandler) httpDo(event *types.Event, conf *EndpointConfi
 	buff := bytes.NewBuffer([]byte(body))
 	req, err := http.NewRequest(conf.Method, uri, buff)
 	if err == nil {
-		log.Printf("[DEBUG] handler=http uri=%s", uri)
+		if conf.Headers != nil {
+			for k, v := range conf.Headers {
+				req.Header.Set(k, v)
+			}
+		}
+
+		log.Printf("[DEBUG] handler=http uri='%s' body=%s", uri, body)
 		return handler.client.Do(req)
 	}
 
