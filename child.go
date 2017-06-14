@@ -2,6 +2,7 @@ package floop
 
 import (
 	"github.com/d3sw/floop/child"
+	"github.com/d3sw/floop/types"
 )
 
 // LifecycledChild wraps lifecycle events around a child process. It hooks in to allow process
@@ -31,13 +32,15 @@ func NewLifecycledChild(input *child.NewInput, lifecycle *Lifecycle) (*Lifecycle
 
 // Start calls the begin phase of the lifecycle and starts the child process
 func (li *LifecycledChild) Start(meta map[string]interface{}) error {
-	ctx := &Context{
+	ctx := &types.Context{
 		Command: li.input.Command,
 		Args:    li.input.Args,
 		Meta:    meta,
 	}
 
-	li.lc.Begin(ctx)
+	if err := li.lc.Begin(ctx); err != nil {
+		return err
+	}
 	return li.proc.Start()
 }
 

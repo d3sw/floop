@@ -1,5 +1,8 @@
 package child
 
+//
+// This code has been taken from github.com/hashicorp/consul-template/child
+//
 import (
 	"errors"
 	"fmt"

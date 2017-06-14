@@ -3,14 +3,14 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"time"
 
-	"github.com/d3sw/floop"
 	"github.com/d3sw/floop/template"
+	"github.com/d3sw/floop/types"
 )
 
 var (
@@ -73,15 +73,14 @@ func NewHTTPClientHandler(conf *EndpointConfig) *HTTPClientHandler {
 	}
 }
 
-func (handler *HTTPClientHandler) Handle(event *floop.Event) (map[string]interface{}, error) {
+func (handler *HTTPClientHandler) Handle(event *types.Event) (map[string]interface{}, error) {
 	resp, err := handler.httpDo(event, handler.conf)
 	if err != nil {
-		//log.Printf("[ERROR] %v", err)
 		return nil, err
 	}
 
-	if resp.StatusCode > 399 {
-		return nil, errors.New(resp.Status)
+	if resp.StatusCode != 200 {
+		return nil, fmt.Errorf(resp.Status)
 	}
 
 	b, err := ioutil.ReadAll(resp.Body)
@@ -102,7 +101,8 @@ func (handler *HTTPClientHandler) Handle(event *floop.Event) (map[string]interfa
 	return r, nil
 }
 
-func (handler *HTTPClientHandler) httpDo(event *floop.Event, conf *EndpointConfig) (*http.Response, error) {
+func (handler *HTTPClientHandler) httpDo(event *types.Event, conf *EndpointConfig) (*http.Response, error) {
+
 	uri := template.Parse(event, conf.URI)
 	body := template.Parse(event, conf.Body)
 	buff := bytes.NewBuffer([]byte(body))
@@ -110,6 +110,7 @@ func (handler *HTTPClientHandler) httpDo(event *floop.Event, conf *EndpointConfi
 	if err == nil {
 		return handler.client.Do(req)
 	}
+
 	return nil, err
 }
 

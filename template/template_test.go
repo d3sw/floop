@@ -3,14 +3,14 @@ package template
 import (
 	"testing"
 
-	"github.com/d3sw/floop/lifecycle"
+	"github.com/d3sw/floop/types"
 )
 
 var testStr = `foo ${meta.key} ${type} something else ${data}`
 
 func Test_Parse(t *testing.T) {
 
-	event := &lifecycle.Event{
+	event := &types.Event{
 		Type: "begin",
 		Meta: map[string]interface{}{"key": "value"},
 		Data: []byte("foo"),

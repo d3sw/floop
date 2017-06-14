@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/d3sw/floop"
+	"github.com/d3sw/floop/types"
 )
 
 // Parse applies event context to the input string returning the normalized string.
-func Parse(event *floop.Event, str string) string {
+func Parse(event *types.Event, str string) string {
 
 	out := str
 	for k, v := range event.Meta {
