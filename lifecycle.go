@@ -20,6 +20,7 @@ func NewLifecycle(conf *Config) (*Lifecycle, error) {
 	if conf == nil {
 		return lc, nil
 	}
+
 	err := lc.loadHandlers(conf)
 	return lc, err
 }
@@ -75,8 +76,8 @@ func (lc *Lifecycle) Begin(ctx *types.Context) error {
 		return nil
 	}
 
-	event := &types.Event{Type: types.EventTypeBegin, Meta: ctx.Meta}
 	for _, v := range handlers {
+		event := &types.Event{Type: types.EventTypeBegin, Meta: ctx.Meta}
 		meta, err := v.Handle(event)
 		if err != nil {
 			if v.conf.IgnoreErrors {
@@ -102,45 +103,61 @@ func (lc *Lifecycle) Progress(line []byte) {
 
 	//event := &types.Event{Type: types.EventTypeProgress, Meta: lc.ctx.Meta, Data: line}
 	for _, v := range handlers {
-		event := &types.Event{Type: types.EventTypeProgress, Meta: lc.ctx.Meta}
-		if !v.applyTransform(string(line), event) {
-			event.Data = line
-		}
-
+		event := &types.Event{Type: types.EventTypeProgress, Meta: lc.ctx.Meta, Data: line}
 		if _, err := v.Handle(event); err != nil {
 			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 		}
 	}
 }
 
-// Failed is called if the process exits with a non-zero exit status.
-func (lc *Lifecycle) Failed(exitCode int) {
+// Failed is called if the process exits with a non-zero exit status. Data from stderr and stdout
+// are passed in as args
+func (lc *Lifecycle) Failed(result *types.ChildResult) {
 
 	handlers, ok := lc.handlers[types.EventTypeFailed]
 	if !ok || handlers == nil || len(handlers) == 0 {
 		return
 	}
 
-	event := &types.Event{Type: types.EventTypeFailed, Meta: lc.ctx.Meta, Data: exitCode}
 	for _, v := range handlers {
+
+		event := &types.Event{
+			Type: types.EventTypeFailed,
+			Meta: lc.ctx.Meta,
+			Data: result,
+		}
+
 		if _, err := v.Handle(event); err != nil {
 			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 		}
+
 	}
 }
 
-// Completed is called when a process exits with a zero exit code.
-func (lc *Lifecycle) Completed() {
+// Completed is called when a process completes with a zero exit code. Data from stderr and stdout
+// are passed in as args
+func (lc *Lifecycle) Completed(result *types.ChildResult) {
 	handlers, ok := lc.handlers[types.EventTypeCompleted]
 	if !ok || handlers == nil || len(handlers) == 0 {
 		return
 	}
-	//fmt.Printf("[End] %d\n", exitCode)
-	event := &types.Event{Type: types.EventTypeCompleted, Meta: lc.ctx.Meta}
+
 	for _, v := range handlers {
+
+		event := &types.Event{
+			Type: types.EventTypeCompleted,
+			Meta: lc.ctx.Meta,
+			Data: result.Stdout,
+		}
+
+		//if !v.applyTransform(result.Stdout, event) {
+		//	event.Data = result.Stdout
+		//}
+
 		if _, err := v.Handle(event); err != nil {
 			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 		}
+
 	}
 }
 
@@ -149,11 +166,14 @@ func (lc *Lifecycle) applyContext(meta map[string]interface{}, conf *types.Handl
 		return
 	}
 
-	if meta != nil {
-		for _, v := range conf.Context {
-			if val, ok := meta[v]; ok {
-				lc.ctx.Meta[v] = val
-			}
+	if meta == nil {
+		return
+	}
+
+	for _, v := range conf.Context {
+		if val, ok := meta[v]; ok {
+			lc.ctx.Meta[v] = val
 		}
 	}
+
 }

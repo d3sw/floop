@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/d3sw/floop"
+	"github.com/d3sw/floop/child"
 )
 
 // CLI is the command line interface to floop
@@ -121,11 +122,6 @@ func (cli *CLI) run() (int, error) {
 		return exitCode, fmt.Errorf("required metadata: %v", conf.Meta)
 	}
 
-	lifeCycle, err := floop.NewLifecycle(conf)
-	if err != nil {
-		return exitCode, err
-	}
-
 	// Override cli command and args
 	cmd := cli.Command()
 	if cmd != "" {
@@ -133,15 +129,16 @@ func (cli *CLI) run() (int, error) {
 		conf.Args = cli.Args()
 	}
 
-	input := newInput(conf.Command, conf.Args, lifeCycle, conf.Quiet)
-	lci, err := floop.NewLifecycledChild(input, lifeCycle)
+	input := &child.NewInput{}
+	loop, err := floop.New(conf, input)
 	if err != nil {
 		return exitCode, err
 	}
-	if err = lci.Start(cli.Meta); err != nil {
+
+	if err = loop.Start(cli.Meta); err != nil {
 		return exitCode, err
 	}
 
-	exitCode = lci.Wait()
+	exitCode = loop.Wait()
 	return exitCode, nil
 }

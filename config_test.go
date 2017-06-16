@@ -8,5 +8,5 @@ func Test_Config(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	t.Log(conf)
+	t.Logf("%+v\n", conf)
 }

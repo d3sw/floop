@@ -14,7 +14,7 @@ func (lc *EchoHandler) Init(*types.HandlerConfig) error {
 }
 
 // Handle echos back input data before process starts
-func (lc *EchoHandler) Handle(event *types.Event) (map[string]interface{}, error) {
-	fmt.Printf("[Echo] phase=%s %s\n", event.Type, event.Data)
+func (lc *EchoHandler) Handle(event *types.Event, conf *types.HandlerConfig) (map[string]interface{}, error) {
+	fmt.Printf("[Echo] phase=%s %+v\n", event.Type, event.Data)
 	return nil, nil
 }

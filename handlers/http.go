@@ -10,7 +10,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/d3sw/floop/template"
 	"github.com/d3sw/floop/types"
 )
 
@@ -20,9 +19,9 @@ var (
 )
 
 type endpointConfig struct {
-	URI     string
-	Method  string
-	Body    string
+	//URI     string
+	Method string
+	//Body    string
 	Headers map[string]string
 }
 
@@ -39,19 +38,21 @@ func NewHTTPClientHandler() *HTTPClientHandler {
 	}
 }
 
-// Init initializes the http handler with the config
+// Init initializes the http handler with the its specific config
 func (handler *HTTPClientHandler) Init(conf *types.HandlerConfig) error {
-	config := conf.Config
+	config := conf.Options
 
 	handler.conf = &endpointConfig{
-		URI:     config["uri"].(string),
+		//URI:     config["uri"].(string),
+		//URI:     conf.URI,
 		Method:  config["method"].(string),
 		Headers: make(map[string]string),
 	}
 
-	if _, ok := config["body"]; ok {
-		handler.conf.Body = config["body"].(string)
-	}
+	//if _, ok := config["body"]; ok {
+	//handler.conf.Body = config["body"].(string)
+	//handler.conf.Body = string(conf.Body)
+	//}
 
 	if hdrs, ok := config["headers"]; ok {
 		hm, ok := hdrs.(map[interface{}]interface{})
@@ -64,12 +65,14 @@ func (handler *HTTPClientHandler) Init(conf *types.HandlerConfig) error {
 			handler.conf.Headers[key] = value
 		}
 	}
+
 	return nil
 }
 
-// Handle handles an event by making an http call per the config.
-func (handler *HTTPClientHandler) Handle(event *types.Event) (map[string]interface{}, error) {
-	resp, err := handler.httpDo(event, handler.conf)
+// Handle handles an event by making an http call per the config.  Event is the raw event and
+// HandlerConfig is the normalized config after interpolations have been applied.
+func (handler *HTTPClientHandler) Handle(event *types.Event, conf *types.HandlerConfig) (map[string]interface{}, error) {
+	resp, err := handler.httpDo(conf)
 	if err != nil {
 		return nil, err
 	}
@@ -96,20 +99,18 @@ func (handler *HTTPClientHandler) Handle(event *types.Event) (map[string]interfa
 	return r, nil
 }
 
-func (handler *HTTPClientHandler) httpDo(event *types.Event, conf *endpointConfig) (*http.Response, error) {
+func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Response, error) {
 
-	uri := template.Parse(event, conf.URI)
-	body := template.Parse(event, conf.Body)
-	buff := bytes.NewBuffer([]byte(body))
-	req, err := http.NewRequest(conf.Method, uri, buff)
+	buff := bytes.NewBuffer([]byte(conf.Body))
+	req, err := http.NewRequest(handler.conf.Method, conf.URI, buff)
 	if err == nil {
-		if conf.Headers != nil {
-			for k, v := range conf.Headers {
+		if handler.conf.Headers != nil {
+			for k, v := range handler.conf.Headers {
 				req.Header.Set(k, v)
 			}
 		}
 
-		log.Printf("[DEBUG] handler=http uri='%s' body=%s", uri, body)
+		log.Printf("[DEBUG] handler=http uri='%s' body='%s'", conf.URI, conf.Body)
 		return handler.client.Do(req)
 	}
 

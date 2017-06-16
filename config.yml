@@ -5,7 +5,7 @@ meta:
 - taskRefName # NoMadeUpdateTask1
 - workflowInstanceId # 8fecc7dd-9736-43f1-983b-30f8e1cb6de3
 
-# Command and args for child process 
+# Command and args for child process
 # command: docker
 # args: [
 #   "run", "--rm",
@@ -23,55 +23,63 @@ handlers:
   # Called before the child process is launched
   begin:
   - type: http
+    uri: "http://conductor-server.service.owf-dev:30000/api/tasks/poll/batch/${Meta.taskType}"
     # Continue launching child process even if handler call returns an error.  Comment this
     # out to exit w/o launching the child process on handler failure
     ignorerrors: true
-    config:
-      uri: "http://conductor-server.service.owf-dev:30000/api/tasks/poll/batch/${meta.taskType}"
+    options:
       method: "GET"
   - type: http
-    config:
-      uri: "http://conductor-server.service.owf-dev:30000/api/tasks/in_progress/${meta.workflowInstanceId}/${meta.taskRefName}"
+    ignorerrors: true
+    uri: "http://conductor-server.service.owf-dev:30000/api/tasks/in_progress/${Meta.workflowInstanceId}/${Meta.taskRefName}"
+    options:
       method: "GET"
     # Additional context to add from the response of the above call which is made available
     # during phases of the lifecycle after this one.
     context: [ "taskId" ]
   # Called any time child process flushes data to stdout and stderr
-  progress:
-  - type: echo
+  #progress:
+  #- type: echo
     # Transform the event data (i.e. from stdout/stderr) into key-values before issueing the
     # callback. If floop fails to apply the transform, the event will contain raw data.
-    transform: [ "kv", "\n", "=" ]
+    #transform: [ "kv", "\n", "=" ]
   # Called when a process exits with a zero status
   completed:
+  - type: echo
+    transform: ["kv", " ", "="]
   - type: http
-    config:
-      uri: "http://conductor-server.service.owf-dev:30000/api/tasks"
+    transform: ["kv", " ", "="]
+    uri: "http://conductor-server.service.owf-dev:30000/api/tasks"
+    options:
       method: "POST"
       headers:
         Content-Type: "application/json"
-      # See types.Event struct for available fields
-      body: |
+    # See types.Event struct for available fields
+    body: |
         {
-            "workflowInstanceId": "${meta.workflowInstanceId}",
-            "taskId": "${meta.taskId}",
+            "workflowInstanceId": "${Meta.workflowInstanceId}",
+            "taskId": "${Meta.taskId}",
             "callbackAfterSeconds": 0,
-            "status": "COMPLETED"
+            "status": "COMPLETED",
+            "outputData": ${Data|json}
         }
   # Called when the process exits with a non-zero status
   failed:
   - type: http
-    config:
-      uri: "http://conductor-server.service.owf-dev:30000/api/tasks"
+    uri: "http://conductor-server.service.owf-dev:30000/api/tasks"
+    options:
       method: "POST"
       headers:
         Content-Type: "application/json"
-      body: |
+    body: |
         {
-            "workflowInstanceId": "${meta.workflowInstanceId}",
-            "taskId": "${meta.taskId}",
-            "reasonForIncompletion": "Exited with code: ${data}",
+            "workflowInstanceId": "${Meta.workflowInstanceId}",
+            "taskId": "${Meta.taskId}",
+            "reasonForIncompletion": "${Data.Stderr}",
             "callbackAfterSeconds": 0,
             "status": "FAILED",
-            "outputData": {"exitCode": ${data}}
+            "outputData": {
+                "code": ${Data.Code},
+                "message": "${Data.Stderr}"
+            }
         }
