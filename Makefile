@@ -9,6 +9,9 @@ clean:
 	rm -f $(NAME)
 	rm -rf ./dist
 
+deps:
+	go get -d ./...
+
 $(NAME):
 	go build -o $(NAME) $(FILES)
 
