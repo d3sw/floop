@@ -45,10 +45,8 @@ handlers:
     #transform: [ "kv", "\n", "=" ]
   # Called when a process exits with a zero status
   completed:
-  - type: echo
-    transform: ["kv", " ", "="]
   - type: http
-    transform: ["kv", " ", "="]
+    transform: ["json"]
     uri: "http://conductor-server.service.owf-dev:30000/api/tasks"
     options:
       method: "POST"
