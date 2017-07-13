@@ -19,4 +19,4 @@ dist:
 	[ -d ./dist ] || mkdir ./dist
 	GOOS=linux $(BUILD_CMD) -o ./dist/$(NAME)-linux $(FILES)
 	GOOS=darwin $(BUILD_CMD) -o ./dist/$(NAME)-darwin $(FILES)
-	GOOS=windows $(BUILD_CMD) -o ./dist/$(NAME) $(FILES)
+	GOOS=windows $(BUILD_CMD) -o ./dist/$(NAME)-windows $(FILES)
