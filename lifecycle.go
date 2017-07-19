@@ -3,6 +3,7 @@ package floop
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/d3sw/floop/handlers"
 	"github.com/d3sw/floop/types"
@@ -37,6 +38,8 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 				handler = handlers.NewHTTPClientHandler()
 			case "echo":
 				handler = &handlers.EchoHandler{}
+			case "gnatsd":
+				handler = &handlers.GnatsdHandler{}
 			default:
 				return fmt.Errorf("handler not supported: %s", config.Type)
 			}
@@ -77,7 +80,12 @@ func (lc *Lifecycle) Begin(ctx *types.Context) error {
 	}
 
 	for _, v := range handlers {
-		event := &types.Event{Type: types.EventTypeBegin, Meta: ctx.Meta}
+		event := &types.Event{
+			Type:      types.EventTypeBegin,
+			Meta:      ctx.Meta,
+			Timestamp: time.Now().UnixNano(),
+		}
+
 		meta, err := v.Handle(event)
 		if err != nil {
 			if v.conf.IgnoreErrors {
@@ -101,9 +109,13 @@ func (lc *Lifecycle) Progress(line []byte) {
 		return
 	}
 
-	//event := &types.Event{Type: types.EventTypeProgress, Meta: lc.ctx.Meta, Data: line}
 	for _, v := range handlers {
-		event := &types.Event{Type: types.EventTypeProgress, Meta: lc.ctx.Meta, Data: line}
+		event := &types.Event{
+			Type:      types.EventTypeProgress,
+			Meta:      lc.ctx.Meta,
+			Data:      line,
+			Timestamp: time.Now().UnixNano(),
+		}
 		if _, err := v.Handle(event); err != nil {
 			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
 		}
@@ -122,9 +134,10 @@ func (lc *Lifecycle) Failed(result *types.ChildResult) {
 	for _, v := range handlers {
 
 		event := &types.Event{
-			Type: types.EventTypeFailed,
-			Meta: lc.ctx.Meta,
-			Data: result,
+			Type:      types.EventTypeFailed,
+			Meta:      lc.ctx.Meta,
+			Data:      result,
+			Timestamp: time.Now().UnixNano(),
 		}
 
 		if _, err := v.Handle(event); err != nil {
@@ -145,9 +158,10 @@ func (lc *Lifecycle) Completed(result *types.ChildResult) {
 	for _, v := range handlers {
 
 		event := &types.Event{
-			Type: types.EventTypeCompleted,
-			Meta: lc.ctx.Meta,
-			Data: result.Stdout,
+			Type:      types.EventTypeCompleted,
+			Meta:      lc.ctx.Meta,
+			Data:      result.Stdout,
+			Timestamp: time.Now().UnixNano(),
 		}
 
 		//if !v.applyTransform(result.Stdout, event) {

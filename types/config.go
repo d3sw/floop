@@ -2,6 +2,18 @@ package types
 
 import "fmt"
 
+type Options map[string]interface{}
+
+func (opt Options) GetString(key string) (string, bool) {
+	var val string
+	v, ok := opt[key]
+	if ok {
+		val, ok = v.(string)
+	}
+
+	return val, ok
+}
+
 // TransformConfig holds configs for a transform
 type TransformConfig []string
 
@@ -18,7 +30,7 @@ type HandlerConfig struct {
 	// Body of the handler
 	Body string
 	// Handler specific configs
-	Options map[string]interface{}
+	Options Options
 	// Continue running child process even it handler returns error
 	IgnoreErrors bool `yaml:"ignorerrors"`
 }

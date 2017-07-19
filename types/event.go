@@ -13,7 +13,8 @@ const (
 // Event is a single event in a given lifecycle.  Meta is the user passed in metadata.  The type
 // of data will be dependent on the event type.
 type Event struct {
-	Type EventType              `json:"type"`
-	Meta map[string]interface{} `json:"meta"`
-	Data interface{}            `json:"data"`
+	Type      EventType              `json:"type"`
+	Timestamp int64                  `json:"timestamp"`
+	Meta      map[string]interface{} `json:"meta"`
+	Data      interface{}            `json:"data"`
 }

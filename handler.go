@@ -63,6 +63,6 @@ func (handler *phaseHandler) Handle(event *types.Event) (map[string]interface{},
 		return nil, err
 	}
 
-	// Call handler
+	// Call user defined handler
 	return handler.Handler.Handle(event, conf)
 }
