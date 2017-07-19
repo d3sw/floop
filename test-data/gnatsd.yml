@@ -3,8 +3,9 @@
 meta:
   - refname
 
-# Command and args for child process
+# Command to be run as child process
 command: docker
+# Arguments passed to the command
 args: [
   "run", "--rm",
   "opencoconut/ffmpeg", "-progress", "/dev/stdout",
@@ -14,9 +15,10 @@ args: [
   ]
 
 # If true don't write to stdout or stderr
-quiet: false
+quiet: true
 
-# Handler configuration for each lifecycle phase
+# Handler configuration for each lifecycle phase.  Multiple handlers are allowed per
+# handler.  Each handler is isolated and cannot share context with other handlers.
 handlers:
   # Called before the child process is launched
   begin:

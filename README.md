@@ -4,7 +4,15 @@ a process and wraps it to perform user defined actions at different phases of a 
 running process
 
 ### Development
-This project requires go1.8.1+
+This project requires go1.8.1+.  It can be built as follows:
+
+```
+# Get dependencies
+make deps
+
+# Build
+make floop
+```
 
 #### Example
 Example configs can be found under the test-data directory.
