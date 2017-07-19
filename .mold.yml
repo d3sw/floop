@@ -1,0 +1,6 @@
+build:
+  - image: golang:1.9
+    workdir: /go/src/github.com/d3sw/floop
+    commands:
+      - make deps
+      - make dist

@@ -1,5 +1,6 @@
 
 NAME = floop
+APP_VERSION = $$(mold -app-version)
 FILES = cmd/main.go cmd/cli.go
 
 BUILD_CMD = go build
