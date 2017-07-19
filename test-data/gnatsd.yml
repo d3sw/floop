@@ -39,8 +39,7 @@ handlers:
     uri: "nats://127.0.0.1:4222"
     options:
       topic: test
-  #- type: echo
-    # Transform the event data (i.e. from stdout/stderr) into key-values before issueing the
+    # Transform the event data (i.e. from stdout/stderr) into key-values before issuing the
     # callback. If floop fails to apply the transform, the event will contain raw data.
     transform: [ "kv", "\n", "=" ]
     body: |
