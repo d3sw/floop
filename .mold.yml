@@ -1,0 +1,9 @@
+build:
+  - image: golang:1.9
+    workdir: /go/src/github.com/d3sw/floop
+    commands:
+      - apt-get update
+      - apt-get install -y jq zip
+      - make deps
+      - make dist
+      - make publish

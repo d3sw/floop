@@ -1,8 +1,10 @@
 
 NAME = floop
-FILES = cmd/main.go cmd/cli.go
-
-BUILD_CMD = go build
+BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
+COMMIT = $(shell git rev-parse --short HEAD)
+BUILDTIME = $(shell date +%Y-%m-%dT%T%z)
+BUILD_CMD = CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo \
+	-ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.buildtime=${BUILDTIME} -w"
 
 clean:
 	go clean -i ./...
@@ -13,10 +15,20 @@ deps:
 	go get -d ./...
 
 $(NAME):
-	go build -o $(NAME) $(FILES)
+	go build -o $(NAME) .
 
-dist:
+# APP_VERSION="v0.1.0" make dist
+dist: clean
 	[ -d ./dist ] || mkdir ./dist
-	GOOS=linux $(BUILD_CMD) -o ./dist/$(NAME)-linux $(FILES)
-	GOOS=darwin $(BUILD_CMD) -o ./dist/$(NAME)-darwin $(FILES)
-	GOOS=windows $(BUILD_CMD) -o ./dist/$(NAME)-windows $(FILES)
+
+	GOOS=darwin $(BUILD_CMD) -o ./dist/$(NAME) .
+	tar -czf ./dist/$(NAME)-darwin-$(APP_VERSION).tgz ./dist/$(NAME); rm -f ./dist/$(NAME)
+
+	GOOS=linux $(BUILD_CMD) -o ./dist/$(NAME) .
+	tar -czf ./dist/$(NAME)-linux-$(APP_VERSION).tgz ./dist/$(NAME); rm -f ./dist/$(NAME)
+
+	GOOS=windows $(BUILD_CMD) -o ./dist/$(NAME).exe .
+	zip ./dist/$(NAME)-windows-$(APP_VERSION).zip ./dist/$(NAME).exe; rm -f ./dist/$(NAME).exe
+
+publish:
+	chmod a+x publish.sh; ./publish.sh	
