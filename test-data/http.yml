@@ -1,0 +1,73 @@
+# Required metadata keys that need to supplied at runtime.  If specified floop will check these are
+# defined before starting the child process.
+meta:
+- taskType
+- taskRefName
+- workflowInstanceId
+
+# If true don't write to stdout or stderr
+quiet: true
+
+# Handler configuration for each lifecycle phase
+handlers:
+  # Called before the child process is launched
+  begin:
+  - type: http
+    uri: "http://localhost:30000/api/tasks/poll/batch/${Meta.taskType}"
+    # Continue launching child process even if handler call returns an error.  Comment this
+    # out to exit w/o launching the child process on handler failure
+    ignorerrors: true
+    options:
+      method: "GET"
+  - type: http
+    ignorerrors: true
+    uri: "http://localhost:30000/api/tasks/in_progress/${Meta.workflowInstanceId}/${Meta.taskRefName}"
+    options:
+      method: "GET"
+    # Additional context to add from the response of the above call which is made available
+    # during phases of the lifecycle after this one.
+    context: [ "taskId" ]
+  # Called any time child process flushes data to stdout and stderr
+  #progress:
+  #- type: echo
+    # Transform the event data (i.e. from stdout/stderr) into key-values before issueing the
+    # callback. If floop fails to apply the transform, the event will contain raw data.
+    #transform: [ "kv", "\n", "=" ]
+  # Called when a process exits with a zero status
+  completed:
+  - type: http
+    transform: ["json"]
+    uri: "http://localhost:30000/api/tasks"
+    options:
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+    # See types.Event struct for available fields
+    body: |
+        {
+            "workflowInstanceId": "${Meta.workflowInstanceId}",
+            "taskId": "${Meta.taskId}",
+            "callbackAfterSeconds": 0,
+            "status": "COMPLETED",
+            "outputData": ${Data|json}
+        }
+  # Called when the process exits with a non-zero status
+  failed:
+  - type: http
+    uri: "http://localhost:30000/api/tasks"
+    options:
+      method: "POST"
+      headers:
+        Content-Type: "application/json"
+    body: |
+        {
+            "workflowInstanceId": "${Meta.workflowInstanceId}",
+            "taskId": "${Meta.taskId}",
+            "reasonForIncompletion": "${Data.Stderr}",
+            "callbackAfterSeconds": 0,
+            "status": "FAILED",
+            "outputData": {
+                "code": ${Data.Code},
+                "message": "${Data.Stderr}"
+            }
+        }
