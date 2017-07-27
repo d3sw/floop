@@ -1,8 +1,6 @@
 # floop
 
-Floop is an integration tool which can be used to provide event-based lifecycle data for nearly process, 
-without requiring any code changes or software coupling.  It currently supports integration with STDOUT, 
-HTTP and NATS endpoints, with near-term plans to add additional protocols.  
+Floop is an integration tool which can be used to provide event-based lifecycle data for any process, without requiring any code changes which would couple your application to its consumer. It currently supports integration with STDOUT, HTTP and NATS endpoints, with near-term plans to add additional protocols. 
 
 Integration actions can be configured for the following lifecycle events:
 * Begin
