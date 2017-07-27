@@ -12,6 +12,14 @@ Contributions will be accepted to the [develop](https://github.com/d3sw/floop/tr
 
 ## How to submit an issue for a feature or bug
 
+Your issue may already be reported! Please search existing floop [issues](https://github.com/d3sw/floop/issues) 
+before creating one. Be ready to provide the following information.
+* Expected Behavior
+* Current Behavior
+* Possible Solution
+* Steps to Reproduce
+* Any Additional Context
+* Environment Details
 
 ## How to submit a proposed code change
 
