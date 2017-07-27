@@ -13,13 +13,11 @@ Integration actions can be configured for the following lifecycle events:
 Floop is currently configured with a single configuration file.  The following example will post JSON to
 a single endpoint when the `find` process starts and when it completes.
 
-Command
--------
+#### Running Floop
 
 `floop -exec find . -name filename`
 
-Configuration
--------------
+#### Configuring Floop
 
 ```
 handlers:
