@@ -1,5 +1,4 @@
-[![Build Status](https://travis-ci.org/d3sw/floop.svg?branch=master)](https://travis-ci.org/d3sw/floop)
-# floop 
+# floop &nbsp; [![Build Status](https://travis-ci.org/d3sw/floop.svg?branch=master)](https://travis-ci.org/d3sw/floop)
 
 Floop is an integration tool which can be used to provide event-based lifecycle data for any process, without requiring any code changes which would couple your application to its consumer. It currently supports integration with STDOUT, HTTP and NATS endpoints, with near-term plans to add additional protocols. 
 
