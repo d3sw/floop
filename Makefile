@@ -1,12 +1,13 @@
 
 NAME = floop
 FILES = cmd/main.go cmd/cli.go
-BRANCH = $(shell git rev-parse --abbrev-ref HEAD)
 COMMIT = $(shell git rev-parse --short HEAD)
 VERSION = $(shell git describe | sed -e "s/^v//")
 BUILDTIME = $(shell date +%Y-%m-%dT%T%z)
 BUILD_CMD = CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo \
-	-ldflags="-X main.branch=${BRANCH} -X main.commit=${COMMIT} -X main.buildtime=${BUILDTIME} -w"
+	-ldflags="-X main.commit=${COMMIT} -X main.buildtime=${BUILDTIME} -w"
+GOOS = $(shell go env GOOS)
+BUILDLOC = ./dist
 
 version:
 	@echo $(VERSION)
@@ -27,14 +28,11 @@ ${NAME}:
 dist: clean
 	[ -d ./dist ] || mkdir ./dist
 
-	$(eval OS := linux) $(eval OUTFILE := ./dist/$(NAME)-$(OS)-$(VERSION))
-	GOOS=$(OS) $(BUILD_CMD) -o $(OUTFILE) $(FILES)
-	tar -czf $(OUTFILE).tgz $(OUTFILE); rm -f $(OUTFILE)
+	$(BUILD_CMD) -o $(BUILDLOC)/$(NAME) $(FILES)
+	tar -czf $(BUILDLOC)/$(NAME)-$(GOOS)-$(VERSION).tgz $(BUILDLOC)/$(NAME); rm -f $(BUILDLOC)/$(NAME)
 
-	$(eval OS := darwin) $(eval OUTFILE := ./dist/$(NAME)-$(OS)-$$(VERSION))
-	GOOS=$(OS) $(BUILD_CMD) -o $(OUTFILE) $(FILES)
-	tar -czf $(OUTFILE).tgz $(OUTFILE); rm -f $(OUTFILE)
+	GOOS=linux $(BUILD_CMD) -o $(BUILDLOC)/$(NAME) $(FILES)
+	tar -czf $(BUILDLOC)/$(NAME)-linux-$(VERSION).tgz $(BUILDLOC)/$(NAME); rm -f $(BUILDLOC)/$(NAME)
 
-	$(eval OS := windows) $(eval OUTFILE := ./dist/$(NAME)-$(OS)-$$(VERSION))
-	GOOS=$(OS) $(BUILD_CMD) -o $(OUTFILE).exe $(FILES)
-	zip $(OUTFILE).zip $(OUTFILE).exe; rm -f $(OUTFILE).exe
+	GOOS=windows $(BUILD_CMD) -o $(BUILDLOC)/$(NAME).exe $(FILES)
+	zip $(BUILDLOC)/$(NAME)-windows-$(VERSION).zip $(BUILDLOC)/$(NAME).exe; rm -f $(BUILDLOC)/$(NAME).exe
