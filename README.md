@@ -15,15 +15,18 @@ a single endpoint when the `find` process starts and when it completes.
 
 #### Running Floop
 
-`floop -exec find . -name filename`
+`floop reference_id=1234 -exec find . -name filename`
 
 #### Configuring Floop
 
 ```
+meta:
+  - reference_id
+
 handlers:
   begin:
   - type: http
-    uri: "http://my-status-service"
+    uri: "http://my-status-service/${Meta.REFERENCE_ID}"
     options:
       method: "POST"
     body: |
@@ -32,7 +35,7 @@ handlers:
         }      
   completed:
   - type: http
-    uri: "http://my-status-service"
+    uri: "http://my-status-service/${Meta.REFERENCE_ID}"
     options:
       method: "POST"
     body: |
