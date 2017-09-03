@@ -8,14 +8,22 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/d3sw/floop/types"
+	resolver "github.com/euforia/go-srv-resolver"
 )
 
 var (
 	errInvalidURI    = "invalid uri: %s"
 	errInvalidMethod = "invalid method: %d"
+)
+
+var (
+	resolverPort = 8600
+	resolverHost = "127.0.0.1"
 )
 
 type endpointConfig struct {
@@ -99,9 +107,39 @@ func (handler *HTTPClientHandler) Handle(event *types.Event, conf *types.Handler
 	return r, nil
 }
 
-func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Response, error) {
+func discoverURI(uri string) (string, error) {
+	u, err := url.Parse(uri)
+	if err != nil {
+		return "", err
+	}
 
+	rslv := resolver.NewResolver(resolverPort, resolverHost)
+
+	// Perform Consul SRV lookup.
+	rslvResp, err := rslv.Lookup(u.Hostname() + ".service.consul")
+	if err != nil {
+		return "", err
+	}
+
+	for _, r := range rslvResp {
+		log.Printf("[DEBUG] host=%s ip=%s port=%d\n", r.Hostname, r.IP, r.Port)
+		u.Host = r.IP + ":" + strconv.Itoa(int(r.Port))
+		return u.String(), nil
+	}
+	return "", fmt.Errorf("no such URI")
+}
+
+func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Response, error) {
 	buff := bytes.NewBuffer([]byte(conf.Body))
+
+	discoveredURI, err := discoverURI(conf.URI)
+	if err != nil {
+		log.Printf("[ERROR] Discovering URI [%s]: %s\n", conf.URI, err.Error())
+		log.Println("[DEBUG] Will be used system DNS server")
+	} else {
+		conf.URI = discoveredURI
+	}
+
 	req, err := http.NewRequest(handler.conf.Method, conf.URI, buff)
 	if err == nil {
 		if handler.conf.Headers != nil {
