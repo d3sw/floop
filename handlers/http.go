@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/d3sw/floop/resolver"
 	"github.com/d3sw/floop/types"
 )
 
@@ -29,12 +30,14 @@ type endpointConfig struct {
 type HTTPClientHandler struct {
 	conf   *endpointConfig
 	client *http.Client
+	resolv *resolver.Resolver
 }
 
 // NewHTTPClientHandler instantiates a new HTTPClientHandler
-func NewHTTPClientHandler() *HTTPClientHandler {
+func NewHTTPClientHandler(resolver *resolver.Resolver) *HTTPClientHandler {
 	return &HTTPClientHandler{
 		client: &http.Client{Timeout: 3 * time.Second},
+		resolv: resolver,
 	}
 }
 
@@ -100,8 +103,16 @@ func (handler *HTTPClientHandler) Handle(event *types.Event, conf *types.Handler
 }
 
 func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Response, error) {
-
 	buff := bytes.NewBuffer([]byte(conf.Body))
+
+	discoveredURI, err := handler.resolv.Discover(conf.URI)
+	if err != nil {
+		log.Printf("[ERROR] Discovering URI [%s]: %s\n", conf.URI, err.Error())
+		log.Println("[DEBUG] Will be used system DNS server")
+	} else {
+		conf.URI = discoveredURI
+	}
+
 	req, err := http.NewRequest(handler.conf.Method, conf.URI, buff)
 	if err == nil {
 		if handler.conf.Headers != nil {
