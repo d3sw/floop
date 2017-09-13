@@ -10,11 +10,13 @@ import (
 
 // Config is the overall config.
 type Config struct {
-	Command  string
-	Args     []string
-	Meta     []string // required meta keys
-	Quiet    bool
-	Handlers map[types.EventType][]*types.HandlerConfig
+	Command       string
+	Args          []string
+	Meta          []string // required meta keys
+	Quiet         bool
+	ResolverHosts []string `yml:"resolverhost"`
+	ResolverPort  int      `yml:"resolverport"`
+	Handlers      map[types.EventType][]*types.HandlerConfig
 }
 
 // HasMeta checks if the input meta has the required metadata keys
@@ -30,8 +32,10 @@ func (conf *Config) HasMeta(meta map[string]interface{}) bool {
 // DefaultConfig returns a Config with defaults using the echo Lifecycle
 func DefaultConfig() *Config {
 	return &Config{
-		Quiet:    false,
-		Handlers: make(map[types.EventType][]*types.HandlerConfig),
+		Quiet:         false,
+		ResolverHosts: []string{dResolverHost},
+		ResolverPort:  dResolverPort,
+		Handlers:      make(map[types.EventType][]*types.HandlerConfig),
 	}
 }
 

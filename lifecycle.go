@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	resolverPort = 8600
-	resolverHost = "127.0.0.1"
+	dResolverPort = 8600
+	dResolverHost = "consul.service"
 )
 
 // Lifecycle implements a Lifecycle that calls multiple lifecycles for an event.
@@ -24,9 +24,20 @@ type Lifecycle struct {
 
 // NewLifecycle instantiates an instance of Lifecycle
 func NewLifecycle(conf *Config) (*Lifecycle, error) {
+	rHosts := conf.ResolverHosts
+	rPort := conf.ResolverPort
+
+	if rHosts == nil {
+		rHosts = []string{dResolverHost}
+	}
+
+	if rPort == 0 {
+		rPort = dResolverPort
+	}
+
 	lc := &Lifecycle{
 		handlers:     make(map[types.EventType][]*phaseHandler),
-		addrResolver: resolver.NewResolver(resolverPort, resolverHost),
+		addrResolver: resolver.NewResolver(rPort, rHosts...),
 	}
 	if conf == nil {
 		return lc, nil

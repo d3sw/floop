@@ -8,6 +8,14 @@ meta:
 # If true don't write to stdout or stderr
 quiet: true
 
+# List of resolver hosts; "consul.service" by default
+resolverhosts: 
+- "127.0.0.1"
+- "consul.service"
+
+# Port for resolver; 8600 used by default
+resolverport: 8600
+
 # Handler configuration for each lifecycle phase
 handlers:
   # Called before the child process is launched
