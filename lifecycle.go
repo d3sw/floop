@@ -6,18 +6,39 @@ import (
 	"time"
 
 	"github.com/d3sw/floop/handlers"
+	"github.com/d3sw/floop/resolver"
 	"github.com/d3sw/floop/types"
+)
+
+var (
+	dResolverPort = 8600
+	dResolverHost = "consul.service"
 )
 
 // Lifecycle implements a Lifecycle that calls multiple lifecycles for an event.
 type Lifecycle struct {
-	ctx      *types.Context
-	handlers map[types.EventType][]*phaseHandler
+	ctx          *types.Context
+	handlers     map[types.EventType][]*phaseHandler
+	addrResolver *resolver.Resolver
 }
 
 // NewLifecycle instantiates an instance of Lifecycle
 func NewLifecycle(conf *Config) (*Lifecycle, error) {
-	lc := &Lifecycle{handlers: make(map[types.EventType][]*phaseHandler)}
+	rHosts := conf.ResolverHosts
+	rPort := conf.ResolverPort
+
+	if rHosts == nil {
+		rHosts = []string{dResolverHost}
+	}
+
+	if rPort == 0 {
+		rPort = dResolverPort
+	}
+
+	lc := &Lifecycle{
+		handlers:     make(map[types.EventType][]*phaseHandler),
+		addrResolver: resolver.NewResolver(rPort, rHosts...),
+	}
 	if conf == nil {
 		return lc, nil
 	}
@@ -35,7 +56,7 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 
 			switch config.Type {
 			case "http":
-				handler = handlers.NewHTTPClientHandler()
+				handler = handlers.NewHTTPClientHandler(lc.addrResolver)
 			case "echo":
 				handler = &handlers.EchoHandler{}
 			case "gnatsd":
