@@ -34,7 +34,7 @@ type Resolver struct {
 	addrCache cache
 }
 
-// NewResolver instantiates a new Resolver instance.
+// NewResolver instantiates a new Resolver instance
 func NewResolver(port int, servers ...string) *Resolver {
 	r := &Resolver{
 		config: dns.ClientConfig{Servers: servers, Port: fmt.Sprintf("%d", port)},
@@ -120,7 +120,8 @@ func (c *cache) getRecord(uri string) (string, bool) {
 	return dnsRecord.hostname, true
 }
 
-func (c *cache) addRecord(addr, hostname, ip string, port uint16) {
+func (c *cache) addRecord(hostname, ip string, port uint16) {
+	addr := hostname + ":" + strconv.Itoa(int(port))
 	c.mtx.Lock()
 	defer c.mtx.Unlock()
 
@@ -138,23 +139,27 @@ func (resolver *Resolver) Discover(uri string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	addr := u.Hostname() + ":" + u.Port()
 
+	addr := u.Hostname() + ":" + u.Port()
 	if record, ok := resolver.addrCache.getRecord(addr); ok {
 		return record, nil
 	}
 
-	// Perform Consul SRV lookup.
-	rslvResp, err := resolver.lookup(u.Hostname() + ".service.consul")
+	// Perform SRV lookup
+	rslvResp, err := resolver.lookup(u.Hostname())
 	if err != nil {
 		return "", err
 	}
 
+	if len(rslvResp) == 0 {
+		return "", fmt.Errorf("service not found")
+	}
+
+	u.Host = rslvResp[0].hostname + ":" + strconv.Itoa(int(rslvResp[0].port))
+
 	for _, r := range rslvResp {
 		log.Printf("[DEBUG] host=%s ip=%s port=%d\n", r.hostname, r.ip, r.port)
-		u.Host = r.ip + ":" + strconv.Itoa(int(r.port))
-		resolver.addrCache.addRecord(u.String(), r.hostname, r.ip, r.port)
-		return u.String(), nil
+		resolver.addrCache.addRecord(r.hostname, r.ip, r.port)
 	}
-	return "", fmt.Errorf("no such URI")
+	return u.String(), nil
 }
