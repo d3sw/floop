@@ -1,7 +1,23 @@
+# Enable docker
+sudo: required
+
 language: go
-go: 
- - 1.8.1
+go:
+- 1.8.1
+
+install:
+- make deps
 
 script:
- - go get -d ./...
- - go build -o floop cmd/main.go cmd/cli.go
+- make test
+- make dist
+
+deploy:
+  provider: releases
+  api_key:
+    secure: DVhyn1dK3jW6zHmDezyIFpBSi/KPvdY/7VykV0xtn98wj/l/RkYScu65zln8hdf0DJpkZ698cqfDCSc6z7vgqEbXL0h7jB+YUqb7DDw0qZFvxKoDy2obVBt92LEtfURyGny68nbXI2164hKlfyoEEpHHw0ld+xMrPqoU6wP004xtCHhu0wnkHVAHhD2UUJh4jGfl+l8oYpzaC+7Pndub5jej/mMcrNoNt3JEHxEuTZU12zHlQEexfjScjs4QdMNoWZcmF/13GWIZkxeYbieK3U4GNsSEC5ULbpBnyENF+J3pPwGu71Yp1PpBgc8/wyViwCqNNOu0hnVJi6gpSHsCPS6RtBwdqUxhc+WUajy8KnAV7SGaMN2p0Hh1lU30ziIAhuTr8iAKeXmTJcbELQfgDX/VNsQbsrJacpmjCSlU63I6odMLGEF6bxzpDvFagGe3q9vcX0jTpsNdcGhEmy2J5Jx9Z8amGYNrCAp0vb0l4cN0FOktdT0lNHCCCTJyVrEX+1N3lMPmhc5SYwkX6y8VZyjbcHHP/Wwk7qoTCUjS8mSpY3SBey469oAZ6w6eeJq9P6jpmVuD5N/as2NwGCG5IX+NEvlgGdZLmEVl1lCAnjy7Xpax5tcZzwBO3eE/q2kPn/j6BmwgVueDRPkoZIYWUn+JevAJMXcqVYg3em5nT+M=
+  skip_cleanup: true
+  file_glob: true
+  file: "dist/floop-*"
+  on:
+    tags: true
