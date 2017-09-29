@@ -2,7 +2,7 @@
 NAME = floop
 FILES = cmd/main.go cmd/cli.go
 COMMIT = $(shell git rev-parse --short HEAD)
-VERSION = $(shell git describe | sed -e "s/^v//")
+VERSION = $(shell grep 'const VERSION' version.go | cut -d'"' -f 2)
 BUILDTIME = $(shell date +%Y-%m-%dT%T%z)
 BUILD_CMD = CGO_ENABLED=0 go build -a -tags netgo -installsuffix netgo \
 	-ldflags="-X main.commit=${COMMIT} -X main.buildtime=${BUILDTIME} -w"
