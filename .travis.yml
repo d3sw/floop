@@ -1,21 +1,15 @@
-# Enable docker
-sudo: required
-
 language: go
 go:
 - 1.8.1
-
 install:
 - make deps
-
 script:
 - make test
 - make dist
-
 deploy:
   provider: releases
   api_key:
-    secure: DVhyn1dK3jW6zHmDezyIFpBSi/KPvdY/7VykV0xtn98wj/l/RkYScu65zln8hdf0DJpkZ698cqfDCSc6z7vgqEbXL0h7jB+YUqb7DDw0qZFvxKoDy2obVBt92LEtfURyGny68nbXI2164hKlfyoEEpHHw0ld+xMrPqoU6wP004xtCHhu0wnkHVAHhD2UUJh4jGfl+l8oYpzaC+7Pndub5jej/mMcrNoNt3JEHxEuTZU12zHlQEexfjScjs4QdMNoWZcmF/13GWIZkxeYbieK3U4GNsSEC5ULbpBnyENF+J3pPwGu71Yp1PpBgc8/wyViwCqNNOu0hnVJi6gpSHsCPS6RtBwdqUxhc+WUajy8KnAV7SGaMN2p0Hh1lU30ziIAhuTr8iAKeXmTJcbELQfgDX/VNsQbsrJacpmjCSlU63I6odMLGEF6bxzpDvFagGe3q9vcX0jTpsNdcGhEmy2J5Jx9Z8amGYNrCAp0vb0l4cN0FOktdT0lNHCCCTJyVrEX+1N3lMPmhc5SYwkX6y8VZyjbcHHP/Wwk7qoTCUjS8mSpY3SBey469oAZ6w6eeJq9P6jpmVuD5N/as2NwGCG5IX+NEvlgGdZLmEVl1lCAnjy7Xpax5tcZzwBO3eE/q2kPn/j6BmwgVueDRPkoZIYWUn+JevAJMXcqVYg3em5nT+M=
+    secure: Uit+cxek0NdzYa+NGtiq5Nir5ohdfcgBW0ZA23sFrevr4oL7/H2Xo2nfPZ3Tq6SbCvDZg6e4fzF9SKHG6ofVLb9dla8sbAyiE+bLj7PRNbTZXTg7c4Ilk5D39i1zKs+vcCpUf4ZPhVWiDvz0Q6cY3Q4v26KiLxAqMmUqJP75q/3gesSpHSpA7ydg67LC1ZASoS+BsaRsWAaxiJkeB1w2JdDVZavM/OzRFND2x3GZ2C5aXkEgn4R5exi0mMF7M3fJuvRVYimdsk1xo8jHBm/x2tl2H3EJPuBQHF9fXxMZNTTGpZN6MJ/WwgzqJ5qOpzxayHPU+08lC/19ULvcNggDq7pB8vywwIYSgtGnnJ37LxCNMPU9TpAGbqtLOH28gQH7m8b8ykuAtgbhfahswl2UcyCj+JoYR3evZ3O1g33z+745ooJqVlWcKuR8LS1tKkawemJjA7wCkMf/97U/8DDRdKgjEMunOx92Zm2FDGJW714j1IQLVJMmxQVtV+HUEdyMJ0ahqzVOxt/N9b5qTlBkDKJFQb5GVg5kmurzTotI8Ft/G516wf2SBZIXECDss7F0vpSl0/LvG0t9HI0TXBaEtT1VBYAc+LL+k2u1BA2AS/+cSMBoom9a5L1ZYY5mzS+wZCQ9CBajvsVWpeycn34+ZUa2cjCRmEvG67sfnSq5aN8=
   skip_cleanup: true
   file_glob: true
   file: "dist/floop-*"
