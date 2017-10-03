@@ -3,7 +3,10 @@ package floop
 import (
 	"bytes"
 	"io"
+	"log"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/d3sw/floop/child"
 	"github.com/d3sw/floop/types"
@@ -52,7 +55,19 @@ func New(conf *Config, input *child.NewInput) (*Floop, error) {
 
 	flp.procInput = input
 	flp.proc, err = child.New(flp.procInput)
+	go flp.listenSignals(flp.proc.Signal)
+
 	return flp, err
+}
+
+func (floop *Floop) listenSignals(sigProcesser func(os.Signal) error) {
+	signalChannel := make(chan os.Signal, 1)
+	signal.Notify(signalChannel, syscall.SIGTERM, syscall.SIGINT)
+	sig := <-signalChannel
+	log.Printf("[INFO] (floop) got \"%s\" signal\n", sig)
+	if err := sigProcesser(sig); err != nil {
+		log.Printf("[ERR] (floop) calling signal [%+v] to child: %s\n", sig, err.Error())
+	}
 }
 
 // Start calls the begin phase of the lifecycle and starts the child process

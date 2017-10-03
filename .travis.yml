@@ -1,7 +1,17 @@
 language: go
-go: 
- - 1.8.1
-
+go:
+- 1.8.1
+install:
+- make deps
 script:
- - go get -d ./...
- - go build -o floop cmd/main.go cmd/cli.go
+- make test
+- make dist
+deploy:
+  provider: releases
+  api_key:
+    secure: Uit+cxek0NdzYa+NGtiq5Nir5ohdfcgBW0ZA23sFrevr4oL7/H2Xo2nfPZ3Tq6SbCvDZg6e4fzF9SKHG6ofVLb9dla8sbAyiE+bLj7PRNbTZXTg7c4Ilk5D39i1zKs+vcCpUf4ZPhVWiDvz0Q6cY3Q4v26KiLxAqMmUqJP75q/3gesSpHSpA7ydg67LC1ZASoS+BsaRsWAaxiJkeB1w2JdDVZavM/OzRFND2x3GZ2C5aXkEgn4R5exi0mMF7M3fJuvRVYimdsk1xo8jHBm/x2tl2H3EJPuBQHF9fXxMZNTTGpZN6MJ/WwgzqJ5qOpzxayHPU+08lC/19ULvcNggDq7pB8vywwIYSgtGnnJ37LxCNMPU9TpAGbqtLOH28gQH7m8b8ykuAtgbhfahswl2UcyCj+JoYR3evZ3O1g33z+745ooJqVlWcKuR8LS1tKkawemJjA7wCkMf/97U/8DDRdKgjEMunOx92Zm2FDGJW714j1IQLVJMmxQVtV+HUEdyMJ0ahqzVOxt/N9b5qTlBkDKJFQb5GVg5kmurzTotI8Ft/G516wf2SBZIXECDss7F0vpSl0/LvG0t9HI0TXBaEtT1VBYAc+LL+k2u1BA2AS/+cSMBoom9a5L1ZYY5mzS+wZCQ9CBajvsVWpeycn34+ZUa2cjCRmEvG67sfnSq5aN8=
+  skip_cleanup: true
+  file_glob: true
+  file: "dist/floop-*"
+  on:
+    tags: true
