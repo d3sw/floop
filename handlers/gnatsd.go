@@ -52,6 +52,9 @@ func (lc *GnatsdHandler) Handle(event *types.Event, conf *types.HandlerConfig) (
 
 	fmt.Printf("[gnatsd] phase=%s topic=%s %+v\n", event.Type, topic, event.Data)
 
+	// Flushes the connection ensuring the last event gets published before the app terminates
+	defer lc.conn.Close()
+
 	// Publish the body as bytes
 	err := lc.conn.Publish(topic, []byte(conf.Body))
 
