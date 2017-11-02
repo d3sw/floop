@@ -20,3 +20,8 @@ func (lc *EchoHandler) Handle(event *types.Event, conf *types.HandlerConfig) (ma
 	fmt.Printf("[Echo] phase=%s %+v\n", event.Type, event.Data)
 	return nil, nil
 }
+
+// CloseConnection - not implemented
+func (lc *EchoHandler) CloseConnection() {
+	//not implemented
+}

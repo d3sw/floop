@@ -97,5 +97,7 @@ func (floop *Floop) Wait() int {
 		floop.lifecycle.Completed(result)
 	}
 
+	floop.lifecycle.Close()
+
 	return code
 }
