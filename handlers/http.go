@@ -129,6 +129,7 @@ func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Respo
 }
 
 // CloseConnection - not implemented
-func (handler *HTTPClientHandler) CloseConnection() {
+func (handler *HTTPClientHandler) CloseConnection() error {
 	//not implemented
+	return nil
 }

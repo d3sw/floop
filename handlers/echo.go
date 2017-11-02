@@ -22,6 +22,7 @@ func (lc *EchoHandler) Handle(event *types.Event, conf *types.HandlerConfig) (ma
 }
 
 // CloseConnection - not implemented
-func (lc *EchoHandler) CloseConnection() {
+func (lc *EchoHandler) CloseConnection() error {
 	//not implemented
+	return nil
 }
