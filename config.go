@@ -10,13 +10,14 @@ import (
 
 // Config is the overall config.
 type Config struct {
-	Command       string
-	Args          []string
-	Meta          []string // required meta keys
-	Quiet         bool
-	ResolverHosts []string `yml:"resolverhost"`
-	ResolverPort  int      `yml:"resolverport"`
-	Handlers      map[types.EventType][]*types.HandlerConfig
+	Command        string
+	Args           []string
+	Meta           []string // required meta keys
+	Quiet          bool
+	ResolverHosts  []string `yml:"resolverhost"`
+	ResolverPort   int      `yml:"resolverport"`
+	Handlers       map[types.EventType][]*types.HandlerConfig
+	ReadFromStderr bool `yml:"stderr"`
 }
 
 // HasMeta checks if the input meta has the required metadata keys
