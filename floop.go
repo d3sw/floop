@@ -31,11 +31,14 @@ func New(conf *Config, input *child.NewInput) (*Floop, error) {
 		return nil, err
 	}
 
-	// TODO: conditionally configure buffering
+	var errCallbackWriter func([]byte)
+	if conf.ReadFromStderr {
+		errCallbackWriter = lifecycle.Progress
+	}
 	flp := &Floop{
 		lifecycle: lifecycle,
 		bufOut:    NewBufferedWriter(lifecycle.Progress, true),
-		bufErr:    NewBufferedWriter(nil, true),
+		bufErr:    NewBufferedWriter(errCallbackWriter, true),
 	}
 
 	input.Command = conf.Command

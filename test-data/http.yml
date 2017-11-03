@@ -8,6 +8,9 @@ meta:
 # If true don't write to stdout or stderr
 quiet: true
 
+# If true don't ignore stderr output
+stderr: true
+
 # List of resolver hosts; "consul.service" by default
 resolverhosts: 
 - "127.0.0.1"
