@@ -212,3 +212,21 @@ func (lc *Lifecycle) applyContext(meta map[string]interface{}, conf *types.Handl
 	}
 
 }
+
+// Close - close completed and failed handlers so the last event is published
+func (lc *Lifecycle) Close() {
+	handlers, ok := lc.handlers[types.EventTypeCompleted]
+	if ok && handlers != nil && len(handlers) != 0 {
+		for _, v := range handlers {
+			v.CloseConnection()
+		}
+	}
+
+	handlers, ok = lc.handlers[types.EventTypeFailed]
+	if ok && handlers != nil && len(handlers) != 0 {
+		for _, v := range handlers {
+			v.CloseConnection()
+		}
+	}
+
+}
