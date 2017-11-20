@@ -63,3 +63,9 @@ func (lc *GnatsdHandler) Handle(event *types.Event, conf *types.HandlerConfig) (
 
 	return nil, err
 }
+
+// CloseConnection - closes the nats connection ensuring the last event gets published before the app terminates
+func (lc *GnatsdHandler) CloseConnection() error {
+	lc.conn.Close()
+	return nil
+}

@@ -13,6 +13,12 @@ var (
 	errUnsupportedTransform = errors.New("unsupported transform")
 )
 
+type Result struct {
+	Code   int // exit code
+	Stdout interface{}
+	Stderr interface{}
+}
+
 // Transform transforms the input given the transform and writes it to the event data
 func Transform(transform []string, input []byte, out *types.Event) (transformed bool, err error) {
 	switch transform[0] {
@@ -38,6 +44,57 @@ func Transform(transform []string, input []byte, out *types.Event) (transformed 
 			out.Data = v
 			transformed = true
 		}
+	default:
+		err = errUnsupportedTransform
+	}
+
+	return
+}
+
+// TransformResult transforms the input given the transform and writes it to the event data
+func TransformResult(transform []string, input *types.ChildResult, out *types.Event) (transformed bool, err error) {
+	r := Result{
+		Code: input.Code,
+	}
+
+	switch transform[0] {
+	case "kv":
+		stdout := transformKeyValuePairs(string(input.Stdout), transform[1], transform[2])
+		stderr := transformKeyValuePairs(string(input.Stderr), transform[1], transform[2])
+		if len(stdout) > 0 || len(stderr) > 0 {
+			r.Stdout = stdout
+			r.Stderr = stderr
+			out.Data = r
+			transformed = true
+		} else {
+			err = errNoMatchingData
+		}
+	case "line":
+		stdout := transformLines(string(input.Stdout), transform[1])
+		stderr := transformLines(string(input.Stderr), transform[1])
+		if len(stdout) > 0 || len(stderr) > 0 {
+			r.Stdout = stdout
+			r.Stderr = stderr
+			out.Data = r
+			transformed = true
+		} else {
+			err = errNoMatchingData
+		}
+	case "json":
+		var stdout interface{}
+		var stderr interface{}
+		if err = json.Unmarshal(input.Stdout, &stdout); err == nil {
+			r.Stdout = stdout
+			transformed = true
+		}
+		if err = json.Unmarshal(input.Stderr, &stderr); err == nil {
+			r.Stderr = stderr
+			transformed = true
+		}
+		if transformed {
+			out.Data = r
+		}
+
 	default:
 		err = errUnsupportedTransform
 	}

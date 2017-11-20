@@ -10,6 +10,7 @@ type Handler interface {
 	// raw event and config after interpolation
 	Handle(event *types.Event, conf *types.HandlerConfig) (map[string]interface{}, error)
 	Init(conf *types.HandlerConfig) error
+	CloseConnection() error
 }
 
 // phaseHandler is the internal handler wrapping the config and handler interfaces
@@ -54,6 +55,10 @@ func (handler *phaseHandler) Handle(event *types.Event) (map[string]interface{},
 			if _, err := Transform(handler.conf.Transform, data, event); err != nil {
 				return nil, err
 			}
+		} else if len(event.Data.(*types.ChildResult).Stderr) > 0 || len(event.Data.(*types.ChildResult).Stdout) > 0 {
+			if _, err := TransformResult(handler.conf.Transform, event.Data.(*types.ChildResult), event); err != nil {
+				return nil, err
+			}
 		}
 
 	}
@@ -65,4 +70,8 @@ func (handler *phaseHandler) Handle(event *types.Event) (map[string]interface{},
 
 	// Call user defined handler
 	return handler.Handler.Handle(event, conf)
+}
+
+func (handler *phaseHandler) CloseConnection() error {
+	return handler.Handler.CloseConnection()
 }
