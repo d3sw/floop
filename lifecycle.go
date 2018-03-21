@@ -56,7 +56,19 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 
 			switch config.Type {
 			case "http":
-				handler = handlers.NewHTTPClientHandler(lc.addrResolver)
+				interval := 0
+				retries := 0
+
+				if _interval, ok := config.Options["interval"]; ok {
+					interval = _interval.(int)
+				}
+
+				if _retries, ok := config.Options["retries"]; ok {
+					retries = _retries.(int)
+				}
+				backoff := handlers.LinearBackoff{Interval:time.Duration(interval) * time.Second}
+
+				handler = handlers.NewHTTPClientHandler(lc.addrResolver, backoff, retries)
 			case "echo":
 				handler = &handlers.EchoHandler{}
 			case "gnatsd":
