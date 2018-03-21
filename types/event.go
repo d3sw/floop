@@ -8,6 +8,7 @@ const (
 	EventTypeProgress  EventType = "progress"
 	EventTypeCompleted EventType = "completed"
 	EventTypeFailed    EventType = "failed"
+	EventTypeCanceled  EventType = "canceled"
 )
 
 // Event is a single event in a given lifecycle.  Meta is the user passed in metadata.  The type

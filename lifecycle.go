@@ -168,6 +168,31 @@ func (lc *Lifecycle) Failed(result *types.ChildResult) {
 	}
 }
 
+// Canceled is called if the process was interrupted or killed. Data from stderr and stdout
+// are passed in as args
+func (lc *Lifecycle) Canceled(result *types.ChildResult) {
+	log.Println("[DEBUG] In Canceled")
+	handlers, ok := lc.handlers[types.EventTypeCanceled]
+	if !ok || handlers == nil || len(handlers) == 0 {
+		return
+	}
+
+	for _, v := range handlers {
+
+		event := &types.Event{
+			Type:      types.EventTypeCanceled,
+			Meta:      lc.ctx.Meta,
+			Data:      result,
+			Timestamp: time.Now().UnixNano(),
+		}
+
+		if _, err := v.Handle(event); err != nil {
+			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
+		}
+
+	}
+}
+
 // Completed is called when a process completes with a zero exit code. Data from stderr and stdout
 // are passed in as args
 func (lc *Lifecycle) Completed(result *types.ChildResult) {
