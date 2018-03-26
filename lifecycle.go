@@ -66,7 +66,13 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 				if _retries, ok := config.Options["retries"]; ok {
 					retries = _retries.(int)
 				}
-				backoff := handlers.LinearBackoff{Interval:time.Duration(interval) * time.Second}
+
+				var backoff handlers.Backoff
+				if _backoff, ok := config.Options["backoff"]; ok && _backoff == "linear" {
+					backoff = handlers.LinearBackoff{Interval:time.Duration(interval) * time.Second}
+				} else {
+					backoff = handlers.ConstantBackoff{Interval:time.Duration(interval) * time.Second}
+				}
 
 				handler = handlers.NewHTTPClientHandler(lc.addrResolver, backoff, retries)
 			case "echo":

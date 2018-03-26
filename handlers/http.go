@@ -45,6 +45,16 @@ func (b LinearBackoff) Next(retry int) time.Duration {
 	return  time.Duration(retry) * b.Interval
 }
 
+// ConstantBackoff implements constant backoff
+type ConstantBackoff struct {
+	Interval time.Duration
+}
+
+// Next returns next time for retrying operation with constant strategy
+func (b ConstantBackoff) Next(_ int) time.Duration {
+	return  b.Interval
+}
+
 // HTTPClientHandler implements a HTTP client handler for events
 type HTTPClientHandler struct {
 	conf   *endpointConfig
@@ -162,8 +172,8 @@ func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Respo
 			break
 		}
 
-		attempt ++
 		time.Sleep(handler.backoff.Next(attempt))
+		attempt ++
 	}
 
 	return response, err

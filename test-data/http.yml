@@ -53,6 +53,7 @@ handlers:
       method: "POST"
       retries: 3
       interval: 5
+      backoff: "linear"
       headers:
         Content-Type: "application/json"
     # See types.Event struct for available fields
@@ -70,6 +71,8 @@ handlers:
     uri: "http://localhost:30000/api/tasks"
     options:
       method: "POST"
+      retries: 4
+      interval: 2
       headers:
         Content-Type: "application/json"
     body: |
