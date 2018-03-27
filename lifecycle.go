@@ -65,7 +65,25 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 
 			switch config.Type {
 			case "http":
-				handler = handlers.NewHTTPClientHandler(lc.addrResolver)
+				interval := 0
+				retries := 0
+
+				if _interval, ok := config.Options["interval"]; ok {
+					interval = _interval.(int)
+				}
+
+				if _retries, ok := config.Options["retries"]; ok {
+					retries = _retries.(int)
+				}
+
+				var backoff handlers.Backoff
+				if _backoff, ok := config.Options["backoff"]; ok && _backoff == "linear" {
+					backoff = handlers.LinearBackoff{Interval:time.Duration(interval) * time.Second}
+				} else {
+					backoff = handlers.ConstantBackoff{Interval:time.Duration(interval) * time.Second}
+				}
+
+				handler = handlers.NewHTTPClientHandler(lc.addrResolver, backoff, retries)
 			case "echo":
 				handler = &handlers.EchoHandler{}
 			case "gnatsd":
@@ -204,6 +222,31 @@ func (lc *Lifecycle) Failed(result *types.ChildResult) {
 		if res.err != nil {
 			log.Printf("[ERROR] phase=%s handler=%s %v", res.eType, res.conf.Type, res.err)
 		}
+	}
+}
+
+// Canceled is called if the process was interrupted or killed. Data from stderr and stdout
+// are passed in as args
+func (lc *Lifecycle) Canceled(result *types.ChildResult) {
+	log.Println("[DEBUG] In Canceled")
+	handlers, ok := lc.handlers[types.EventTypeCanceled]
+	if !ok || handlers == nil || len(handlers) == 0 {
+		return
+	}
+
+	for _, v := range handlers {
+
+		event := &types.Event{
+			Type:      types.EventTypeCanceled,
+			Meta:      lc.ctx.Meta,
+			Data:      result,
+			Timestamp: time.Now().UnixNano(),
+		}
+
+		if _, err := v.Handle(event); err != nil {
+			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
+		}
+
 	}
 }
 

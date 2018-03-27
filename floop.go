@@ -10,6 +10,7 @@ import (
 
 	"github.com/d3sw/floop/child"
 	"github.com/d3sw/floop/types"
+	"strings"
 )
 
 // Floop is the core interface that manages the process lifecycle and handlers
@@ -95,7 +96,12 @@ func (floop *Floop) Wait() int {
 	}
 
 	if code != 0 {
-		floop.lifecycle.Failed(result)
+		state := floop.proc.State().String()
+		if strings.Contains(state, os.Interrupt.String()) || strings.Contains(state, os.Kill.String()) {
+			floop.lifecycle.Canceled(result)
+		} else {
+			floop.lifecycle.Failed(result)
+		}
 	} else {
 		floop.lifecycle.Completed(result)
 	}

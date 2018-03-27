@@ -55,9 +55,11 @@ func (handler *phaseHandler) Handle(event *types.Event) (map[string]interface{},
 			if _, err := Transform(handler.conf.Transform, data, event); err != nil {
 				return nil, err
 			}
-		} else if len(event.Data.(*types.ChildResult).Stderr) > 0 || len(event.Data.(*types.ChildResult).Stdout) > 0 {
-			if _, err := TransformResult(handler.conf.Transform, event.Data.(*types.ChildResult), event); err != nil {
-				return nil, err
+		} else if data, ok := event.Data.(*types.ChildResult); ok {
+			if len(data.Stderr) > 0 || len(data.Stdout) > 0 {
+				if _, err := TransformResult(handler.conf.Transform, data, event); err != nil {
+					return nil, err
+				}
 			}
 		}
 

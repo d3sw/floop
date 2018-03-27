@@ -250,6 +250,11 @@ func (c *Child) Stop() {
 	c.stopped = true
 }
 
+// State returns current state of the process
+func (c *Child) State() *os.ProcessState {
+	return c.cmd.ProcessState
+}
+
 func (c *Child) start() error {
 	cmd := exec.Command(c.command, c.args...)
 	cmd.Stdin = c.stdin
