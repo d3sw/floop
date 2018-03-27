@@ -52,7 +52,12 @@ func Transform(transform []string, input []byte, out *types.Event) (transformed 
 }
 
 // TransformResult transforms the input given the transform and writes it to the event data
-func TransformResult(transform []string, input *types.ChildResult, out *types.Event) (transformed bool, err error) {
+func TransformResult(transform types.TransformConfig, input *types.ChildResult, out *types.Event) (transformed bool, err error) {
+	tr, err := transform.ValidateTransform()
+	if err != nil || !tr {
+		return
+	}
+
 	r := Result{
 		Code: input.Code,
 	}

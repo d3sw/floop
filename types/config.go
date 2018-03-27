@@ -49,28 +49,28 @@ func (conf *HandlerConfig) Clone() *HandlerConfig {
 }
 
 // ValidateTransform validates the transform
-func (conf *HandlerConfig) ValidateTransform() error {
-	if conf.Transform == nil || len(conf.Transform) == 0 {
-		return nil
+func (conf TransformConfig) ValidateTransform() (bool, error) {
+	if conf == nil || len(conf) == 0 {
+		return false, nil
 	}
 
 	var err error
-	switch conf.Transform[0] {
+	switch conf[0] {
 	case "kv":
-		if len(conf.Transform) != 3 {
+		if len(conf) != 3 {
 			err = fmt.Errorf("transform kv requires 2 arguments")
 		}
 	case "line":
-		if len(conf.Transform) != 2 {
+		if len(conf) != 2 {
 			err = fmt.Errorf("transform line requires 1 argument")
 		}
 	case "json":
-		if len(conf.Transform) > 3 {
+		if len(conf) > 3 {
 			err = fmt.Errorf("transform json invalid")
 		}
 	default:
-		err = fmt.Errorf("transform unsupported: %s", conf.Transform[0])
+		err = fmt.Errorf("transform unsupported: %s", conf[0])
 	}
 
-	return err
+	return true, err
 }
