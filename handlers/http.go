@@ -26,18 +26,51 @@ type endpointConfig struct {
 	Headers map[string]string
 }
 
+// Backoff interface defines contract for backoff strategies
+type Backoff interface {
+	Next(retry int) time.Duration
+}
+
+// LinearBackoff implements linear backoff
+type LinearBackoff struct {
+	Interval time.Duration
+}
+
+// Next returns next time for retrying operation with linear strategy
+func (b LinearBackoff) Next(retry int) time.Duration {
+	if retry <= 0 {
+		return  time.Duration(0)
+	}
+
+	return  time.Duration(retry) * b.Interval
+}
+
+// ConstantBackoff implements constant backoff
+type ConstantBackoff struct {
+	Interval time.Duration
+}
+
+// Next returns next time for retrying operation with constant strategy
+func (b ConstantBackoff) Next(_ int) time.Duration {
+	return  b.Interval
+}
+
 // HTTPClientHandler implements a HTTP client handler for events
 type HTTPClientHandler struct {
 	conf   *endpointConfig
 	client *http.Client
 	resolv *resolver.Resolver
+	backoff Backoff
+	retries int
 }
 
 // NewHTTPClientHandler instantiates a new HTTPClientHandler
-func NewHTTPClientHandler(resolver *resolver.Resolver) *HTTPClientHandler {
+func NewHTTPClientHandler(resolver *resolver.Resolver, backoff Backoff, maxRetries int) *HTTPClientHandler {
 	return &HTTPClientHandler{
 		client: &http.Client{Timeout: 3 * time.Second},
 		resolv: resolver,
+		backoff: backoff,
+		retries: maxRetries,
 	}
 }
 
@@ -105,16 +138,24 @@ func (handler *HTTPClientHandler) Handle(event *types.Event, conf *types.Handler
 func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Response, error) {
 	buff := bytes.NewBuffer([]byte(conf.Body))
 
-	discoveredURI, err := handler.resolv.Discover(conf.URI)
-	if err != nil {
-		log.Printf("[ERROR] Discovering URI [%s]: %s\n", conf.URI, err.Error())
-		log.Println("[DEBUG] Will be used system DNS server")
-	} else {
-		conf.URI = discoveredURI
-	}
+	var response *http.Response
+	var err error
 
-	req, err := http.NewRequest(handler.conf.Method, conf.URI, buff)
-	if err == nil {
+	attempt := 1
+	for {
+		discoveredURI, err := handler.resolv.Discover(conf.URI)
+		if err != nil {
+			log.Printf("[ERROR] Discovering URI [%s]: %s\n", conf.URI, err.Error())
+			log.Println("[DEBUG] Will be used system DNS server")
+		} else {
+			conf.URI = discoveredURI
+		}
+
+		req, err := http.NewRequest(handler.conf.Method, conf.URI, buff)
+		if err != nil {
+			return nil, err
+		}
+
 		if handler.conf.Headers != nil {
 			for k, v := range handler.conf.Headers {
 				req.Header.Set(k, v)
@@ -122,10 +163,20 @@ func (handler *HTTPClientHandler) httpDo(conf *types.HandlerConfig) (*http.Respo
 		}
 
 		log.Printf("[DEBUG] handler=http uri='%s' body='%s'", conf.URI, conf.Body)
-		return handler.client.Do(req)
+		response, err = handler.client.Do(req)
+		if err == nil && response.StatusCode == 200{
+			break
+		}
+
+		if attempt >= handler.retries {
+			break
+		}
+
+		time.Sleep(handler.backoff.Next(attempt))
+		attempt ++
 	}
 
-	return nil, err
+	return response, err
 }
 
 // CloseConnection - not implemented
