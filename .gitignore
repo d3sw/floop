@@ -1,5 +1,6 @@
 # App specific
 dist
+floop
 
 # Binaries for programs and plugins
 *.exe
