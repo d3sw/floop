@@ -6,17 +6,16 @@ import (
 
 	"github.com/d3sw/floop/types"
 	//"github.com/nats-io/go-nats"
-	"github.com/nats-io/go-nats-streaming"
 )
 
-// NatsStreamdHandler is handler to publish lifecycle events to gnatsd
+// NatsStreamdHandler is handler to publish lifecycle events to NatsStream
 type NatsStreamdHandler struct {
 	conf *types.HandlerConfig
 	// Nats connection
 	conn stan.Conn
 }
 
-// Init initializes the connection to the gnatsd cluster
+// Init initializes the connection to the NatsStream cluster
 func (lc *NatsStreamdHandler) Init(conf *types.HandlerConfig) error {
 	lc.conf = conf
 
@@ -36,7 +35,7 @@ func (lc *NatsStreamdHandler) Init(conf *types.HandlerConfig) error {
 	return err
 }
 
-// Handle publishes to gnatsd.  The config is the normalized
+// Handle publishes to NatsStream.  The config is the normalized
 // config built using data from the child process.  This may be different from the one
 // used in Init
 func (lc *NatsStreamdHandler) Handle(event *types.Event, conf *types.HandlerConfig) (map[string]interface{}, error) {
@@ -46,7 +45,7 @@ func (lc *NatsStreamdHandler) Handle(event *types.Event, conf *types.HandlerConf
 		return nil, fmt.Errorf("topic not specified")
 	}
 
-	fmt.Printf("[gnatsd] phase=%s topic=%s %+v\n", event.Type, topic, event.Data)
+	fmt.Printf("[nats-stream] phase=%s topic=%s %+v\n", event.Type, topic, event.Data)
 
 	// Publish the body as bytes
 	err := lc.conn.Publish(topic, []byte(conf.Body))
