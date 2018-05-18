@@ -69,9 +69,9 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 
 				var backoff handlers.Backoff
 				if _backoff, ok := config.Options["backoff"]; ok && _backoff == "linear" {
-					backoff = handlers.LinearBackoff{Interval:time.Duration(interval) * time.Second}
+					backoff = handlers.LinearBackoff{Interval: time.Duration(interval) * time.Second}
 				} else {
-					backoff = handlers.ConstantBackoff{Interval:time.Duration(interval) * time.Second}
+					backoff = handlers.ConstantBackoff{Interval: time.Duration(interval) * time.Second}
 				}
 
 				handler = handlers.NewHTTPClientHandler(lc.addrResolver, backoff, retries)
@@ -79,6 +79,8 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 				handler = &handlers.EchoHandler{}
 			case "gnatsd":
 				handler = &handlers.GnatsdHandler{}
+			case "nats-stream":
+				handler = &handlers.NatsStreamdHandler{}
 			default:
 				return fmt.Errorf("handler not supported: %s", config.Type)
 			}
