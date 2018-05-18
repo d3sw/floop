@@ -6,6 +6,7 @@ import (
 
 	"github.com/d3sw/floop/types"
 	//"github.com/nats-io/go-nats"
+	stan "github.com/nats-io/go-nats-streaming"
 )
 
 // NatsStreamdHandler is handler to publish lifecycle events to NatsStream
