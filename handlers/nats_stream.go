@@ -29,7 +29,7 @@ func (lc *NatsStreamdHandler) Init(conf *types.HandlerConfig) error {
 		return errors.New("client_id required")
 	}
 
-	conn, err := stan.Connect(clusterID, clientID)
+	conn, err := stan.Connect(clusterID, clientID, stan.NatsURL(conf.URI))
 	if err == nil {
 		lc.conn = conn
 	}
