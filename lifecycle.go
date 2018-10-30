@@ -1,9 +1,12 @@
 package floop
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"time"
+
+	"plugin"
 
 	"github.com/d3sw/floop/handlers"
 	"github.com/d3sw/floop/resolver"
@@ -81,6 +84,11 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 				handler = &handlers.GnatsdHandler{}
 			case "nats-stream":
 				handler = &handlers.NatsStreamdHandler{}
+			case "plug-in":
+				var err error
+				if handler, err = lc.loadPluginHandler(config); err != nil {
+					return err
+				}
 			default:
 				return fmt.Errorf("handler not supported: %s", config.Type)
 			}
@@ -92,6 +100,33 @@ func (lc *Lifecycle) loadHandlers(conf *Config) error {
 		}
 	}
 	return nil
+}
+
+func (lc *Lifecycle) loadPluginHandler(conf *types.HandlerConfig) (Handler, error) {
+	path, ok := conf.Options.GetString("plugin_path")
+	if !ok || path == "" {
+		return nil, errors.New("plugin_path required")
+	}
+	name, ok := conf.Options.GetString("plugin_name")
+	if !ok || path == "" {
+		return nil, errors.New("plugin_name required")
+	}
+
+	plugmod, err := plugin.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	plug, err := plugmod.Lookup(name)
+	if err != nil {
+		return nil, err
+	}
+	var handler handlers.Handler
+	handler, ok = plug.(handlers.Handler)
+	if !ok {
+		return nil, errors.New("unexpected type from module symbol")
+	}
+
+	return handlers.NewPluginHandler(handler), nil
 }
 
 // Register registers a new Handler by an arbitrary name.
