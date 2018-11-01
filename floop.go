@@ -8,9 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 
+	"strings"
+
 	"github.com/d3sw/floop/child"
 	"github.com/d3sw/floop/types"
-	"strings"
 )
 
 // Floop is the core interface that manages the process lifecycle and handlers
@@ -26,7 +27,6 @@ type Floop struct {
 
 // New instantiates a new instance of floop.
 func New(conf *Config, input *child.NewInput) (*Floop, error) {
-
 	lifecycle, err := NewLifecycle(conf)
 	if err != nil {
 		return nil, err

@@ -120,13 +120,12 @@ func (lc *Lifecycle) loadPluginHandler(conf *types.HandlerConfig) (Handler, erro
 	if err != nil {
 		return nil, err
 	}
-	var handler handlers.Handler
-	handler, ok = plug.(handlers.Handler)
+	var handler Handler
+	handler, ok = plug.(Handler)
 	if !ok {
 		return nil, errors.New("unexpected type from module symbol")
 	}
-
-	return handlers.NewPluginHandler(handler), nil
+	return handler, nil
 }
 
 // Register registers a new Handler by an arbitrary name.
