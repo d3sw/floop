@@ -3,7 +3,7 @@ package floop
 import "fmt"
 
 // VERSION number
-const VERSION = "0.1.6"
+const VERSION = "0.1.7"
 
 var (
 	branch    string
