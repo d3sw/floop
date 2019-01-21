@@ -18,6 +18,15 @@ var (
 	dResolverHost = "consul.service"
 )
 
+// HandlerResponse stores a result of Handler execution
+type handlerResponse struct {
+	meta      map[string]interface{}
+	err       error
+	eType     types.EventType
+	conf      *types.HandlerConfig
+	ignoreErr bool
+}
+
 // Lifecycle implements a Lifecycle that calls multiple lifecycles for an event.
 type Lifecycle struct {
 	ctx          *types.Context
@@ -154,6 +163,8 @@ func (lc *Lifecycle) Begin(ctx *types.Context) error {
 		return nil
 	}
 
+	doneCh := make(chan *handlerResponse, len(handlers))
+
 	for _, v := range handlers {
 		event := &types.Event{
 			Type:      types.EventTypeBegin,
@@ -161,18 +172,28 @@ func (lc *Lifecycle) Begin(ctx *types.Context) error {
 			Timestamp: time.Now().UnixNano(),
 		}
 
-		meta, err := v.Handle(event)
-		if err != nil {
-			if v.conf.IgnoreErrors {
-				log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
-				continue
-			}
-			return err
-		}
-
-		lc.applyContext(meta, v.conf)
+		go func(v *phaseHandler) {
+			meta, err := v.Handle(event)
+			doneCh <- &handlerResponse{meta: meta, err: err, eType: event.Type, conf: v.conf, ignoreErr: v.conf.IgnoreErrors}
+		}(v)
 	}
 
+	var failedHandlers int
+	for i := 0; i < len(handlers); i++ {
+		res := <-doneCh
+		if res.err != nil {
+			log.Printf("[ERROR] phase=%s handler=%s %v", res.eType, res.conf.Type, res.err)
+			if res.ignoreErr {
+				continue
+			}
+			failedHandlers++
+		}
+		lc.applyContext(res.meta, res.conf)
+	}
+
+	if failedHandlers > 0 {
+		return fmt.Errorf("%d handlers were finished with error", failedHandlers)
+	}
 	return nil
 }
 
@@ -184,6 +205,8 @@ func (lc *Lifecycle) Progress(line []byte) {
 		return
 	}
 
+	doneCh := make(chan *handlerResponse, len(handlers))
+
 	for _, v := range handlers {
 		event := &types.Event{
 			Type:      types.EventTypeProgress,
@@ -191,8 +214,16 @@ func (lc *Lifecycle) Progress(line []byte) {
 			Data:      line,
 			Timestamp: time.Now().UnixNano(),
 		}
-		if _, err := v.Handle(event); err != nil {
-			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
+		go func(v *phaseHandler) {
+			_, err := v.Handle(event)
+			doneCh <- &handlerResponse{err: err, eType: event.Type, conf: v.conf}
+		}(v)
+	}
+
+	for i := 0; i < len(handlers); i++ {
+		res := <-doneCh
+		if res.err != nil {
+			log.Printf("[ERROR] phase=%s handler=%s %v", res.eType, res.conf.Type, res.err)
 		}
 	}
 }
@@ -206,6 +237,8 @@ func (lc *Lifecycle) Failed(result *types.ChildResult) {
 		return
 	}
 
+	doneCh := make(chan *handlerResponse, len(handlers))
+
 	for _, v := range handlers {
 
 		event := &types.Event{
@@ -214,11 +247,17 @@ func (lc *Lifecycle) Failed(result *types.ChildResult) {
 			Data:      result,
 			Timestamp: time.Now().UnixNano(),
 		}
+		go func(v *phaseHandler) {
+			_, err := v.Handle(event)
+			doneCh <- &handlerResponse{err: err, eType: event.Type, conf: v.conf}
+		}(v)
+	}
 
-		if _, err := v.Handle(event); err != nil {
-			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
+	for i := 0; i < len(handlers); i++ {
+		res := <-doneCh
+		if res.err != nil {
+			log.Printf("[ERROR] phase=%s handler=%s %v", res.eType, res.conf.Type, res.err)
 		}
-
 	}
 }
 
@@ -255,6 +294,8 @@ func (lc *Lifecycle) Completed(result *types.ChildResult) {
 		return
 	}
 
+	doneCh := make(chan *handlerResponse, len(handlers))
+
 	for _, v := range handlers {
 
 		event := &types.Event{
@@ -268,10 +309,17 @@ func (lc *Lifecycle) Completed(result *types.ChildResult) {
 		//	event.Data = result.Stdout
 		//}
 
-		if _, err := v.Handle(event); err != nil {
-			log.Printf("[ERROR] phase=%s handler=%s %v", event.Type, v.conf.Type, err)
-		}
+		go func(v *phaseHandler) {
+			_, err := v.Handle(event)
+			doneCh <- &handlerResponse{err: err, eType: event.Type, conf: v.conf}
+		}(v)
+	}
 
+	for i := 0; i < len(handlers); i++ {
+		res := <-doneCh
+		if res.err != nil {
+			log.Printf("[ERROR] phase=%s handler=%s %v", res.eType, res.conf.Type, res.err)
+		}
 	}
 }
 
